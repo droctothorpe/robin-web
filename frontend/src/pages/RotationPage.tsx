@@ -138,7 +138,7 @@ export function Rotation({
           <div>
             <strong>This is a sample rotation.</strong> Try anything. Changes stay in this tab and vanish on reload.
           </div>
-          <Link to="/" className="btn btn-primary small">
+          <Link to="/new" className="btn btn-primary small">
             Make your own
           </Link>
         </div>

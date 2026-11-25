@@ -15,6 +15,7 @@ export default function App() {
         <TopBar />
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/new" element={<Landing />} />
           <Route path="/demo" element={<Demo canEdit />} />
           <Route path="/r/sample-edit-link" element={<Demo canEdit />} />
           <Route path="/r/sample-view-link" element={<Demo canEdit={false} />} />
