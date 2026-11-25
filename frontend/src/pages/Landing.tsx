@@ -145,21 +145,6 @@ export default function Landing() {
           </ul>
         </section>
       )}
-
-      <section className="muted small how">
-        <h3>How it works</h3>
-        <ul>
-          <li>
-            The edit link is the only key. Anyone who has it can change the
-            rotation. Share the view link more freely.
-          </li>
-          <li>
-            Every change is recorded with the name the person gave themselves,
-            so the history is a memory aid, not a security log.
-          </li>
-          <li>Rotations nobody opens for 180 days are deleted.</li>
-        </ul>
-      </section>
     </main>
   );
 }
