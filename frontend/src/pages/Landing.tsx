@@ -47,7 +47,6 @@ export default function Landing() {
           Name
           <input
             className="input"
-            placeholder="Standup lead, on-call, dishes…"
             maxLength={80}
             value={name}
             onChange={(e) => setName(e.target.value)}
@@ -59,14 +58,13 @@ export default function Landing() {
           <textarea
             className="input"
             rows={5}
-            placeholder={'Alex\nSam\nPriya'}
             value={membersText}
             onChange={(e) => setMembersText(e.target.value)}
           />
         </label>
         <label>
           Your name, for the history (optional, stays in this browser)
-          <input className="input" maxLength={40} placeholder="Alex" value={who} onChange={(e) => setWho(e.target.value)} />
+          <input className="input" maxLength={40} value={who} onChange={(e) => setWho(e.target.value)} />
         </label>
         {error && <p className="error">{error}</p>}
         <div className="row end">
