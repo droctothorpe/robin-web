@@ -205,11 +205,10 @@ export async function bump(env: Env, r: Rotation, actor: string): Promise<Notifi
 /** Which turn change Undo would revert right now, if any. */
 export async function undoable(env: Env, r: Rotation): Promise<'advanced' | 'bumped' | null> {
   if (r.members.length < 2) return null
-  const last = await db.lastOrderEvent(env.DB, r.id)
-  return last && (last.kind === 'advanced' || last.kind === 'bumped') ? last.kind : null
+  return ops.nextUndo(await db.orderEvents(env.DB, r.id))
 }
 
-/** Revert the most recent Advance or Bump, as long as nothing has changed the order since. */
+/** Revert the newest Advance or Bump not already undone, as long as nothing else has changed the order since. */
 export async function undo(env: Env, r: Rotation, actor: string): Promise<Notification | null> {
   const kind = await undoable(env, r)
   if (!kind) throw invalid('Nothing to undo.')

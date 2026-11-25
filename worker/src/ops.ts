@@ -77,6 +77,23 @@ export function randomPick(members: string[], already: string[]): { picked: stri
   return { picked, already: [...next, picked] }
 }
 
+/**
+ * Which turn change Undo would revert, given the order-changing audit kinds newest first.
+ * Each `undone` cancels the next older Advance or Bump; anything else that changed the
+ * order (membership edits, creation) ends the run.
+ */
+export function nextUndo(kinds: string[]): 'advanced' | 'bumped' | null {
+  let undone = 0
+  for (const kind of kinds) {
+    if (kind === 'undone') undone += 1
+    else if (kind === 'advanced' || kind === 'bumped') {
+      if (undone === 0) return kind
+      undone -= 1
+    } else return null
+  }
+  return null
+}
+
 export function sameSet(a: string[], b: string[]): boolean {
   const x = a.map(fold).sort()
   const y = b.map(fold).sort()

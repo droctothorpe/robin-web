@@ -25,8 +25,9 @@ Robin equitably distributes recurring work across a team by taking turns.
   position and the next Member becomes Current.
 
 **Undo**
-: Revert the most recent Advance or Bump, restoring the previous Current. Only
-  available while nothing else has changed the order since.
+: Revert the newest Advance or Bump that has not already been undone, restoring
+  the previous Current. Repeatable, stepping back through a run of Advances and
+  Bumps, until something else (a membership change) has altered the order.
 
 **Random pick**
 : Choose one Member at random without changing the Rotation's order. Picks

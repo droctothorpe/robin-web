@@ -190,15 +190,15 @@ export function pruneCreations(db: D1Database, before: Date): D1PreparedStatemen
   return db.prepare('DELETE FROM creations WHERE created_at < ?').bind(before.toISOString())
 }
 
-/** The newest audit entry that changed the member order (or created the rotation). Drives Undo. */
-export async function lastOrderEvent(db: D1Database, rotationId: string): Promise<{ kind: string } | null> {
-  const row = await db
+/** Kinds of the audit entries that changed the member order (or created the rotation), newest first. Drives Undo. */
+export async function orderEvents(db: D1Database, rotationId: string, limit = 500): Promise<string[]> {
+  const { results } = await db
     .prepare(
       `SELECT kind FROM audit_entries WHERE rotation_id = ?
          AND kind IN ('advanced', 'bumped', 'undone', 'member_added', 'member_removed', 'members_reordered', 'created')
-       ORDER BY id DESC LIMIT 1`,
+       ORDER BY id DESC LIMIT ?`,
     )
-    .bind(rotationId)
-    .first<{ kind: string }>()
-  return row ? { kind: row.kind } : null
+    .bind(rotationId, limit)
+    .all<{ kind: string }>()
+  return results.map((r) => r.kind)
 }

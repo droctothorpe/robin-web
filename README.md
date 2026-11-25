@@ -121,9 +121,9 @@ Webhook payload:
 
 ```json
 {
-  "text": "*Standup lead*: it's Sam's turn. <https://.../r/VIEW|View rotation>",
-  "content": "Standup lead: it's Sam's turn. https://.../r/VIEW",
-  "rotation": "Standup lead",
+  "text": "*Lead Standup*: it's Sam's turn. <https://.../r/VIEW|View rotation>",
+  "content": "Lead Standup: it's Sam's turn. https://.../r/VIEW",
+  "rotation": "Lead Standup",
   "current": "Sam",
   "previous": "Alex",
   "trigger": "manual",

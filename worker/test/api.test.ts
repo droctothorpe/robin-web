@@ -17,7 +17,7 @@ async function call(method: string, path: string, body?: unknown, headers: Recor
   return { status: res.status, json, res }
 }
 
-async function createRotation(name = 'Standup lead', members = ['Alex', 'Sam', 'Priya']): Promise<Json> {
+async function createRotation(name = 'Lead Standup', members = ['Alex', 'Sam', 'Priya']): Promise<Json> {
   const r = await call('POST', '/api/rotations', { name, members }, H)
   expect(r.status).toBe(201)
   return r.json
@@ -76,7 +76,7 @@ describe('rotations API', () => {
     expect(entries[1].detail).toEqual({ from: 'Alex', to: 'Sam', trigger: 'manual' })
   })
 
-  it('undo reverts the last advance or bump, once, until the order changes again', async () => {
+  it('undo walks back through advances and bumps until the order changed another way', async () => {
     const t = rotation.edit_token
     expect(rotation.can_undo).toBe(false)
     let r = await call('POST', `/api/r/${t}/advance`, undefined, H)
@@ -86,6 +86,25 @@ describe('rotations API', () => {
     expect(r.json.members).toEqual(['Alex', 'Sam', 'Priya'])
     expect(r.json.can_undo).toBe(false)
     expect((await call('POST', `/api/r/${t}/undo`, undefined, H)).status).toBe(422)
+    // Advance, advance, bump, then three undos land back at the start.
+    await call('POST', `/api/r/${t}/advance`, undefined, H)
+    await call('POST', `/api/r/${t}/advance`, undefined, H)
+    r = await call('POST', `/api/r/${t}/bump`, undefined, H)
+    expect(r.json.members).toEqual(['Alex', 'Priya', 'Sam'])
+    r = await call('POST', `/api/r/${t}/undo`, undefined, H)
+    expect(r.json.members).toEqual(['Priya', 'Alex', 'Sam'])
+    expect(r.json.can_undo).toBe(true)
+    r = await call('POST', `/api/r/${t}/undo`, undefined, H)
+    expect(r.json.members).toEqual(['Sam', 'Priya', 'Alex'])
+    r = await call('POST', `/api/r/${t}/undo`, undefined, H)
+    expect(r.json.members).toEqual(['Alex', 'Sam', 'Priya'])
+    expect(r.json.can_undo).toBe(false)
+    expect((await call('POST', `/api/r/${t}/undo`, undefined, H)).status).toBe(422)
+    // An advance after an undo is itself undoable, and the older undone ones stay undone.
+    await call('POST', `/api/r/${t}/advance`, undefined, H)
+    r = await call('POST', `/api/r/${t}/undo`, undefined, H)
+    expect(r.json.members).toEqual(['Alex', 'Sam', 'Priya'])
+    expect(r.json.can_undo).toBe(false)
     r = await call('POST', `/api/r/${t}/bump`, undefined, H)
     expect(r.json.members).toEqual(['Sam', 'Alex', 'Priya'])
     r = await call('POST', `/api/r/${t}/undo`, undefined, H)
@@ -148,7 +167,7 @@ describe('rotations API', () => {
   it('delete requires the exact name', async () => {
     const t = rotation.edit_token
     expect((await call('POST', `/api/r/${t}/delete`, { confirm_name: 'wrong' })).status).toBe(422)
-    expect((await call('POST', `/api/r/${t}/delete`, { confirm_name: 'standup lead' })).status).toBe(204)
+    expect((await call('POST', `/api/r/${t}/delete`, { confirm_name: 'lead standup' })).status).toBe(204)
     expect((await call('GET', `/api/r/${t}`)).status).toBe(404)
     expect((await call('GET', `/api/r/${rotation.view_token}`)).status).toBe(404)
   })
