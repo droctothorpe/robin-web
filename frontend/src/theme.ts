@@ -1,25 +1,25 @@
-export type Theme = 'light' | 'dark' | 'system'
+export type Theme = 'light' | 'dark'
 
 const KEY = 'robin.theme'
+const DEFAULT: Theme = 'light'
 
+/** The viewer's choice, or light when they have not made one. The OS preference is not consulted. */
 export function getTheme(): Theme {
   try {
     const v = localStorage.getItem(KEY)
-    return v === 'light' || v === 'dark' ? v : 'system'
+    return v === 'dark' ? 'dark' : DEFAULT
   } catch {
-    return 'system'
+    return DEFAULT
   }
 }
 
 export function applyTheme(t: Theme): void {
-  const root = document.documentElement
-  if (t === 'system') root.removeAttribute('data-theme')
-  else root.setAttribute('data-theme', t)
+  document.documentElement.setAttribute('data-theme', t)
 }
 
 export function setTheme(t: Theme): void {
   try {
-    if (t === 'system') localStorage.removeItem(KEY)
+    if (t === DEFAULT) localStorage.removeItem(KEY)
     else localStorage.setItem(KEY, t)
   } catch {
     /* storage unavailable */
@@ -27,8 +27,7 @@ export function setTheme(t: Theme): void {
   applyTheme(t)
 }
 
-/** The theme actually showing right now, resolving "system" to what the OS says. */
-export function effectiveTheme(t: Theme = getTheme()): 'light' | 'dark' {
-  if (t !== 'system') return t
-  return window.matchMedia?.('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'
+/** The theme actually showing right now. */
+export function effectiveTheme(t: Theme = getTheme()): Theme {
+  return t
 }
