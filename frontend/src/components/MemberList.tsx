@@ -16,6 +16,7 @@ import {
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { useState, type FormEvent } from 'react'
+import { CloseIcon, GripIcon } from './Icons'
 
 type Props = {
   members: string[]
@@ -49,9 +50,8 @@ export default function MemberList({ members, canEdit, onReorder, onRemove, onAd
   }
 
   return (
-    <section className="card">
-      <h2>Members</h2>
-      {members.length === 0 && <p className="muted">No one yet.</p>}
+    <div className="members">
+      {members.length === 0 && <p className="muted center">No one on this rotation yet.</p>}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={members} strategy={verticalListSortingStrategy}>
           <ol className="member-list">
@@ -62,21 +62,20 @@ export default function MemberList({ members, canEdit, onReorder, onRemove, onAd
         </SortableContext>
       </DndContext>
       {canEdit && (
-        <form className="row" onSubmit={add}>
+        <form className="add-row" onSubmit={add}>
           <input
-            className="input grow"
-            placeholder="Add a member"
+            className="input"
+            placeholder="Add someone"
             maxLength={60}
             value={draft}
             onChange={(e) => setDraft(e.target.value)}
           />
-          <button type="submit" className="btn" disabled={!draft.trim()}>
+          <button type="submit" className="btn small" disabled={!draft.trim()}>
             Add
           </button>
         </form>
       )}
-      {canEdit && members.length > 1 && <p className="muted small">Drag to reorder. The top name is Current.</p>}
-    </section>
+    </div>
   )
 }
 
@@ -96,20 +95,25 @@ function MemberRow({
     disabled: !canEdit,
   })
   const style = { transform: CSS.Transform.toString(transform), transition }
+  const isCurrent = index === 0
   return (
-    <li ref={setNodeRef} style={style} className={`member ${isDragging ? 'dragging' : ''} ${index === 0 ? 'current' : ''}`}>
+    <li
+      ref={setNodeRef}
+      style={style}
+      className={`member${isDragging ? ' dragging' : ''}${isCurrent ? ' current' : ''}`}
+    >
       {canEdit ? (
         <button type="button" className="handle" aria-label={`Drag ${name}`} {...attributes} {...listeners}>
-          ⋮⋮
+          <GripIcon />
         </button>
       ) : (
-        <span className="handle muted">{index + 1}</span>
+        <span className="handle" />
       )}
+      <span className="position">{isCurrent ? 'Now' : index === 1 ? 'Next' : index + 1}</span>
       <span className="member-name">{name}</span>
-      {index === 0 && <span className="badge">Current</span>}
       {canEdit && (
-        <button type="button" className="btn btn-ghost small" onClick={onRemove} aria-label={`Remove ${name}`}>
-          Remove
+        <button type="button" className="icon-btn remove" onClick={onRemove} aria-label={`Remove ${name}`}>
+          <CloseIcon size={14} />
         </button>
       )}
     </li>

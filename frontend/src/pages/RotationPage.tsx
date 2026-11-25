@@ -3,10 +3,11 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { api, ApiError, type RotationState, type Schedule } from '../api'
 import AuditLog from '../components/AuditLog'
 import CopyButton from '../components/CopyButton'
-import LinksPanel from '../components/LinksPanel'
+import { ShareIcon } from '../components/Icons'
 import MemberList from '../components/MemberList'
 import NamePrompt from '../components/NamePrompt'
 import SchedulePanel from '../components/SchedulePanel'
+import ShareModal from '../components/ShareModal'
 import WebhookPanel from '../components/WebhookPanel'
 import { useRotation } from '../hooks/useRotation'
 import { daysUntil } from '../lib/format'
@@ -18,27 +19,28 @@ export default function RotationPage() {
   const { token = '' } = useParams()
   const { status, apply } = useRotation(token)
 
-  if (status.kind === 'loading') return <p className="card muted">Loading…</p>
+  if (status.kind === 'loading') return <p className="muted center">Loading…</p>
   if (status.kind === 'missing')
     return (
-      <div className="card stack">
+      <div className="empty">
         <h1>No rotation at this link</h1>
         <p className="muted">
-          It may have been deleted, expired after inactivity, or the link was regenerated. Check with whoever shared it.
+          It may have been deleted, expired after inactivity, or the link was regenerated. Check with whoever
+          shared it.
         </p>
         <Link to="/">Make a new one</Link>
       </div>
     )
   if (status.kind === 'deleted')
     return (
-      <div className="card stack">
+      <div className="empty">
         <h1>This rotation was deleted</h1>
         <Link to="/">Back to start</Link>
       </div>
     )
   if (status.kind === 'error')
     return (
-      <div className="card stack">
+      <div className="empty">
         <h1>Something went wrong</h1>
         <p className="error">{status.message}</p>
       </div>
@@ -54,6 +56,7 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
   const [toast, setToast] = useState<string | null>(null)
   const [picked, setPicked] = useState<string | null>(null)
   const [pending, setPending] = useState<Pending>(null)
+  const [sharing, setSharing] = useState(false)
   const [who, setWho] = useState<string | null>(getDisplayName)
   const canEdit = state.can_edit
 
@@ -99,23 +102,43 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
   }
 
   const days = daysUntil(state.expires_at)
+  const editUrl = state.edit_token ? `${window.location.origin}/r/${state.edit_token}` : null
 
   return (
-    <main className="stack">
+    <main className="rotation">
       {pending && <NamePrompt initial="" onSubmit={onName} onCancel={() => setPending(null)} />}
+      {sharing && (
+        <ShareModal
+          editToken={state.edit_token}
+          viewToken={state.view_token}
+          canEdit={canEdit}
+          onClose={() => setSharing(false)}
+          onRegenerate={(which) =>
+            void act(async (w) => {
+              const r = await api.regenerate(token, which, w)
+              if (which === 'edit' && r.edit_token) {
+                forgetRotation(token)
+                window.location.replace(`/r/${r.edit_token}`)
+                return
+              }
+              return r
+            })
+          }
+        />
+      )}
       {toast && (
         <div className="toast" role="status">
           {toast}
         </div>
       )}
 
-      {isNew && state.edit_token && (
+      {isNew && editUrl && (
         <div className="banner">
-          <strong>Save this link.</strong> It is the only way back in, and anyone who has it can edit. Share it
-          with your team.
+          <div>
+            <strong>Save this link.</strong> It is the only way back in. Share it with your team.
+          </div>
           <div className="row">
-            <code className="link-url">{`${window.location.origin}/r/${state.edit_token}`}</code>
-            <CopyButton text={`${window.location.origin}/r/${state.edit_token}`} label="Copy edit link" />
+            <CopyButton text={editUrl} label="Copy edit link" className="btn btn-primary small" />
             <button type="button" className="btn btn-ghost small" onClick={() => setParams({})}>
               Got it
             </button>
@@ -125,24 +148,30 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
 
       {days <= EXPIRY_WARNING_DAYS && (
         <div className="banner warn">
-          Nobody has opened this rotation in a while. It is deleted after {state.ttl_days} days without a visit;{' '}
-          {days <= 0 ? 'that is due any moment' : `${days} day${days === 1 ? '' : 's'} left`}. Opening it, as you just
-          did, resets the clock.
+          Nobody had opened this rotation in a while. It is deleted after {state.ttl_days} days without a visit.
+          Your visit just reset the clock.
         </div>
       )}
 
-      <Header state={state} canEdit={canEdit} who={who} onRename={(n) => act((w) => api.rename(token, n, w))} onChangeName={() => setPending(() => async () => undefined)} />
+      <Header
+        state={state}
+        canEdit={canEdit}
+        who={who}
+        onRename={(n) => act((w) => api.rename(token, n, w))}
+        onChangeName={() => setPending(() => async () => undefined)}
+        onShare={() => setSharing(true)}
+      />
 
-      <section className="card current-card">
-        <div className="eyebrow">Current</div>
-        <div className="current-name">{state.current ?? '—'}</div>
-        {state.members.length > 1 && (
-          <div className="muted">
-            Next: {state.members[1]}
-          </div>
-        )}
+      <section className="board">
+        <MemberList
+          members={state.members}
+          canEdit={canEdit}
+          onReorder={(m) => void act((w) => api.reorder(token, m, w))}
+          onRemove={(n) => void act((w) => api.removeMember(token, n, w))}
+          onAdd={(n) => act((w) => api.addMember(token, n, w))}
+        />
         {canEdit && (
-          <div className="row actions">
+          <div className="actions">
             <button
               type="button"
               className="btn btn-primary"
@@ -155,10 +184,10 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
               type="button"
               className="btn"
               disabled={state.members.length < 2}
-              title="Skip the current member; they go second"
+              title="Skip whoever is up now; they go next instead"
               onClick={() => act((w) => api.bump(token, w))}
             >
-              Bump
+              Skip
             </button>
             <button
               type="button"
@@ -172,13 +201,13 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
                 })
               }
             >
-              Random pick
+              Random
             </button>
           </div>
         )}
         {picked && (
           <p className="picked">
-            Random pick: <strong>{picked}</strong>{' '}
+            Random pick: <strong>{picked}</strong>
             <button type="button" className="btn btn-ghost small" onClick={() => setPicked(null)}>
               Dismiss
             </button>
@@ -186,50 +215,24 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
         )}
       </section>
 
-      <div className="grid">
-        <MemberList
-          members={state.members}
+      <section className="settings">
+        <SchedulePanel
+          schedule={state.schedule}
+          paused={state.schedule_paused}
+          nextFireAt={state.next_fire_at}
           canEdit={canEdit}
-          onReorder={(m) => void act((w) => api.reorder(token, m, w))}
-          onRemove={(n) => void act((w) => api.removeMember(token, n, w))}
-          onAdd={(n) => act((w) => api.addMember(token, n, w))}
+          onSave={(s: Schedule) => act((w) => api.setSchedule(token, s, w))}
+          onClear={() => void act((w) => api.clearSchedule(token, w))}
+          onPause={(p) => void act((w) => api.setPaused(token, p, w))}
         />
-        <div className="stack">
-          <SchedulePanel
-            schedule={state.schedule}
-            paused={state.schedule_paused}
-            nextFireAt={state.next_fire_at}
-            canEdit={canEdit}
-            onSave={(s: Schedule) => act((w) => api.setSchedule(token, s, w))}
-            onClear={() => void act((w) => api.clearSchedule(token, w))}
-            onPause={(p) => void act((w) => api.setPaused(token, p, w))}
-          />
-          <WebhookPanel
-            url={state.webhook_url}
-            hasWebhook={state.has_webhook}
-            canEdit={canEdit}
-            onSave={(u) => act((w) => api.setWebhook(token, u, w))}
-            onClear={() => void act((w) => api.clearWebhook(token, w))}
-          />
-        </div>
-      </div>
-
-      <LinksPanel
-        editToken={state.edit_token}
-        viewToken={state.view_token}
-        canEdit={canEdit}
-        onRegenerate={(which) =>
-          void act(async (w) => {
-            const r = await api.regenerate(token, which, w)
-            if (which === 'edit' && r.edit_token) {
-              forgetRotation(token)
-              window.location.replace(`/r/${r.edit_token}`)
-              return
-            }
-            return r
-          })
-        }
-      />
+        <WebhookPanel
+          url={state.webhook_url}
+          hasWebhook={state.has_webhook}
+          canEdit={canEdit}
+          onSave={(u) => act((w) => api.setWebhook(token, u, w))}
+          onClear={() => void act((w) => api.clearWebhook(token, w))}
+        />
+      </section>
 
       <AuditLog token={token} version={state.version} />
 
@@ -244,12 +247,14 @@ function Header({
   who,
   onRename,
   onChangeName,
+  onShare,
 }: {
   state: RotationState
   canEdit: boolean
   who: string | null
   onRename: (name: string) => Promise<boolean>
   onChangeName: () => void
+  onShare: () => void
 }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(state.name)
@@ -261,40 +266,47 @@ function Header({
   }
 
   return (
-    <header className="row between wrap">
-      {editing ? (
-        <form className="row" onSubmit={submit}>
-          <input className="input" autoFocus maxLength={80} value={draft} onChange={(e) => setDraft(e.target.value)} />
-          <button type="submit" className="btn small">
-            Save
-          </button>
-          <button type="button" className="btn btn-ghost small" onClick={() => setEditing(false)}>
-            Cancel
-          </button>
-        </form>
-      ) : (
-        <h1 className="row">
-          {state.name}
-          {canEdit && (
-            <button
-              type="button"
-              className="btn btn-ghost small"
-              onClick={() => {
-                setDraft(state.name)
-                setEditing(true)
-              }}
-            >
-              Rename
+    <header className="rotation-head">
+      <div className="title-wrap">
+        {editing ? (
+          <form className="row" onSubmit={submit}>
+            <input className="input" autoFocus maxLength={80} value={draft} onChange={(e) => setDraft(e.target.value)} />
+            <button type="submit" className="btn small">
+              Save
             </button>
+            <button type="button" className="btn btn-ghost small" onClick={() => setEditing(false)}>
+              Cancel
+            </button>
+          </form>
+        ) : (
+          <h1
+            className={canEdit ? 'editable' : ''}
+            title={canEdit ? 'Click to rename' : undefined}
+            onClick={
+              canEdit
+                ? () => {
+                    setDraft(state.name)
+                    setEditing(true)
+                  }
+                : undefined
+            }
+          >
+            {state.name}
+          </h1>
+        )}
+        <div className="muted small">
+          {canEdit ? (
+            <button type="button" className="link-action" onClick={onChangeName}>
+              {who ? `You are ${who}` : 'Set your name'}
+            </button>
+          ) : (
+            'View only'
           )}
-          {!canEdit && <span className="badge">View only</span>}
-        </h1>
-      )}
-      {canEdit && (
-        <button type="button" className="btn btn-ghost small" onClick={onChangeName}>
-          {who ? `You are ${who}` : 'Set your name'}
-        </button>
-      )}
+        </div>
+      </div>
+      <button type="button" className="icon-btn share" onClick={onShare} aria-label="Share">
+        <ShareIcon />
+      </button>
     </header>
   )
 }
@@ -316,28 +328,28 @@ function DangerZone({ token, name }: { token: string; name: string }) {
   }
 
   return (
-    <section className="card danger">
-      <div className="row between">
-        <h2>Delete rotation</h2>
-        {!open && (
-          <button type="button" className="btn btn-ghost small" onClick={() => setOpen(true)}>
-            Delete…
-          </button>
-        )}
-      </div>
-      {open && (
-        <form className="stack" onSubmit={del}>
+    <section className="danger-zone">
+      {!open ? (
+        <button type="button" className="link-action danger-text" onClick={() => setOpen(true)}>
+          Delete this rotation
+        </button>
+      ) : (
+        <form className="setting-form" onSubmit={del}>
           <p className="muted small">
             This removes the rotation and its history for everyone, immediately, with no undo. Type{' '}
             <strong>{name}</strong> to confirm.
           </p>
-          <input className="input" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder={name} />
+          <input className="input" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder={name} autoFocus />
           {error && <p className="error">{error}</p>}
           <div className="row end">
-            <button type="button" className="btn btn-ghost" onClick={() => setOpen(false)}>
+            <button type="button" className="btn btn-ghost small" onClick={() => setOpen(false)}>
               Cancel
             </button>
-            <button type="submit" className="btn btn-danger" disabled={confirm.trim().toLowerCase() !== name.toLowerCase()}>
+            <button
+              type="submit"
+              className="btn btn-danger small"
+              disabled={confirm.trim().toLowerCase() !== name.toLowerCase()}
+            >
               Delete forever
             </button>
           </div>

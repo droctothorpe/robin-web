@@ -18,53 +18,74 @@ export default function WebhookPanel({ url, hasWebhook, canEdit, onSave, onClear
   }
 
   return (
-    <section className="card">
-      <div className="row between">
-        <h2>Notifications</h2>
+    <div className="setting">
+      <div className="setting-row">
+        <div className="setting-text">
+          <div className="setting-label">Notifications</div>
+          {hasWebhook ? (
+            <div>
+              Posting to <code>{canEdit && url ? safeHost(url) : 'a webhook'}</code> whenever the turn changes.
+            </div>
+          ) : (
+            <div className="muted">Off. Add a Slack or Discord webhook to get a post when the turn changes.</div>
+          )}
+        </div>
         {canEdit && !editing && (
-          <button type="button" className="btn btn-ghost small" onClick={() => { setDraft(url ?? ''); setEditing(true) }}>
-            {hasWebhook ? 'Change' : 'Set up'}
-          </button>
+          <div className="setting-actions">
+            <button
+              type="button"
+              className="btn btn-ghost small"
+              onClick={() => {
+                setDraft(url ?? '')
+                setEditing(true)
+              }}
+            >
+              {hasWebhook ? 'Change' : 'Set up'}
+            </button>
+          </div>
         )}
       </div>
-      {!editing && !hasWebhook && (
-        <p className="muted">
-          Paste a Slack or Discord incoming webhook URL and Robin posts whenever Current changes.
-        </p>
-      )}
-      {!editing && hasWebhook && (
-        <>
-          <p>
-            Posting to <code>{canEdit && url ? safeHost(url) : 'a webhook'}</code> whenever Current changes.
-          </p>
-          {canEdit && (
-            <button type="button" className="btn btn-ghost small" onClick={onClear}>
-              Remove webhook
-            </button>
-          )}
-        </>
-      )}
       {editing && (
-        <form className="stack" onSubmit={submit}>
-          <input
-            className="input"
-            type="url"
-            placeholder="https://hooks.slack.com/services/…"
-            value={draft}
-            onChange={(e) => setDraft(e.target.value)}
-            required
-          />
-          <div className="row end">
-            <button type="button" className="btn btn-ghost" onClick={() => setEditing(false)}>
-              Cancel
-            </button>
-            <button type="submit" className="btn btn-primary">
-              Save webhook
-            </button>
+        <form className="setting-form" onSubmit={submit}>
+          <label>
+            Webhook URL
+            <input
+              className="input"
+              type="url"
+              placeholder="https://hooks.slack.com/services/…"
+              value={draft}
+              onChange={(e) => setDraft(e.target.value)}
+              required
+              autoFocus
+            />
+          </label>
+          <div className="row between">
+            <div>
+              {hasWebhook && (
+                <button
+                  type="button"
+                  className="btn btn-ghost small danger-text"
+                  onClick={() => {
+                    setEditing(false)
+                    onClear()
+                  }}
+                >
+                  Remove webhook
+                </button>
+              )}
+            </div>
+            <div className="row">
+              <button type="button" className="btn btn-ghost small" onClick={() => setEditing(false)}>
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary small">
+                Save
+              </button>
+            </div>
           </div>
         </form>
       )}
-    </section>
+    </div>
   )
 }
 

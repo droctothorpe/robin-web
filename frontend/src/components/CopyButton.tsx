@@ -1,6 +1,15 @@
 import { useState } from 'react'
+import { CheckIcon } from './Icons'
 
-export default function CopyButton({ text, label = 'Copy' }: { text: string; label?: string }) {
+export default function CopyButton({
+  text,
+  label = 'Copy',
+  className = 'btn',
+}: {
+  text: string
+  label?: string
+  className?: string
+}) {
   const [done, setDone] = useState(false)
   async function copy() {
     try {
@@ -12,8 +21,14 @@ export default function CopyButton({ text, label = 'Copy' }: { text: string; lab
     }
   }
   return (
-    <button type="button" className="btn btn-ghost" onClick={copy}>
-      {done ? 'Copied' : label}
+    <button type="button" className={className} onClick={copy}>
+      {done ? (
+        <>
+          <CheckIcon size={14} /> Copied
+        </>
+      ) : (
+        label
+      )}
     </button>
   )
 }

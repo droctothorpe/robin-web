@@ -30,12 +30,12 @@ export default function Landing() {
   }
 
   return (
-    <main className="stack">
+    <main className="stack landing">
       <section className="hero">
-        <h1>Take turns without the argument.</h1>
+        <h1>Whose turn is it?</h1>
         <p className="muted">
-          Make a rotation, share one link with your team, and let everyone see whose turn it is. No accounts.
-          Rotate by hand or on a schedule, with a history of every change.
+          Make a rotation, share one link, and everyone can see who is up. No accounts. Rotate by hand or on a
+          schedule.
         </p>
       </section>
 

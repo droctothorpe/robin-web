@@ -23,49 +23,55 @@ const KINDS: { value: ScheduleKind; label: string }[] = [
 export default function SchedulePanel({ schedule, paused, nextFireAt, canEdit, onSave, onClear, onPause }: Props) {
   const [editing, setEditing] = useState(false)
   return (
-    <section className="card">
-      <div className="row between">
-        <h2>Schedule</h2>
-        {canEdit && !editing && (
-          <button type="button" className="btn btn-ghost small" onClick={() => setEditing(true)}>
-            {schedule ? 'Change' : 'Set up'}
-          </button>
-        )}
-      </div>
-      {!schedule && !editing && <p className="muted">Not scheduled. Advance by hand, or set a schedule to rotate automatically.</p>}
-      {schedule && !editing && (
-        <>
-          <p>
-            {describeSchedule(schedule)}
-            {paused && <span className="badge warn">Paused</span>}
-          </p>
-          {nextFireAt && !paused && (
-            <p className="muted small">
-              Next advance {formatDateTime(nextFireAt)} ({relativeTime(nextFireAt)})
-            </p>
+    <div className="setting">
+      <div className="setting-row">
+        <div className="setting-text">
+          <div className="setting-label">Schedule</div>
+          {schedule ? (
+            <div>
+              {describeSchedule(schedule)}
+              {paused && <span className="badge warn">Paused</span>}
+              {nextFireAt && !paused && (
+                <div className="muted small">
+                  Next: {formatDateTime(nextFireAt)}, {relativeTime(nextFireAt)}
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="muted">Off. Advance by hand, or rotate automatically.</div>
           )}
-          {canEdit && (
-            <div className="row">
-              <button type="button" className="btn small" onClick={() => onPause(!paused)}>
+        </div>
+        {canEdit && !editing && (
+          <div className="setting-actions">
+            {schedule && (
+              <button type="button" className="btn btn-ghost small" onClick={() => onPause(!paused)}>
                 {paused ? 'Resume' : 'Pause'}
               </button>
-              <button type="button" className="btn btn-ghost small" onClick={onClear}>
-                Remove schedule
-              </button>
-            </div>
-          )}
-        </>
-      )}
+            )}
+            <button type="button" className="btn btn-ghost small" onClick={() => setEditing(true)}>
+              {schedule ? 'Change' : 'Set up'}
+            </button>
+          </div>
+        )}
+      </div>
       {editing && (
         <ScheduleForm
           initial={schedule}
           onCancel={() => setEditing(false)}
+          onClear={
+            schedule
+              ? () => {
+                  setEditing(false)
+                  onClear()
+                }
+              : undefined
+          }
           onSave={async (s) => {
             if (await onSave(s)) setEditing(false)
           }}
         />
       )}
-    </section>
+    </div>
   )
 }
 
@@ -73,10 +79,12 @@ function ScheduleForm({
   initial,
   onSave,
   onCancel,
+  onClear,
 }: {
   initial: Schedule | null
   onSave: (s: Schedule) => Promise<void>
   onCancel: () => void
+  onClear?: () => void
 }) {
   const zones = useMemo(timeZones, [])
   const [kind, setKind] = useState<ScheduleKind>(initial?.kind ?? 'weekly')
@@ -92,87 +100,97 @@ function ScheduleForm({
     if (kind === 'weekly' || kind === 'every_n_weeks') s.weekday = weekday
     if (kind === 'every_n_weeks') {
       s.interval_weeks = interval
-      // Week zero is the week the schedule is set, unless we are editing an
-      // existing every-N-weeks schedule, in which case keep its anchor.
-      s.anchor = initial?.kind === 'every_n_weeks' && initial.anchor ? initial.anchor : new Date().toISOString().slice(0, 10)
+      s.anchor =
+        initial?.kind === 'every_n_weeks' && initial.anchor ? initial.anchor : new Date().toISOString().slice(0, 10)
     }
     if (kind === 'monthly') s.day_of_month = dayOfMonth
     void onSave(s)
   }
 
   return (
-    <form className="stack" onSubmit={submit}>
-      <label>
-        Repeat
-        <select className="input" value={kind} onChange={(e) => setKind(e.target.value as ScheduleKind)}>
-          {KINDS.map((k) => (
-            <option key={k.value} value={k.value}>
-              {k.label}
-            </option>
-          ))}
-        </select>
-      </label>
-      {(kind === 'weekly' || kind === 'every_n_weeks') && (
+    <form className="setting-form" onSubmit={submit}>
+      <div className="form-grid">
         <label>
-          On
-          <select className="input" value={weekday} onChange={(e) => setWeekday(Number(e.target.value))}>
-            {WEEKDAYS.map((d, i) => (
-              <option key={d} value={i}>
-                {d}
+          Repeat
+          <select className="input" value={kind} onChange={(e) => setKind(e.target.value as ScheduleKind)}>
+            {KINDS.map((k) => (
+              <option key={k.value} value={k.value}>
+                {k.label}
               </option>
             ))}
           </select>
         </label>
-      )}
-      {kind === 'every_n_weeks' && (
+        {(kind === 'weekly' || kind === 'every_n_weeks') && (
+          <label>
+            On
+            <select className="input" value={weekday} onChange={(e) => setWeekday(Number(e.target.value))}>
+              {WEEKDAYS.map((d, i) => (
+                <option key={d} value={i}>
+                  {d}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
+        {kind === 'every_n_weeks' && (
+          <label>
+            Every how many weeks
+            <input
+              className="input"
+              type="number"
+              min={1}
+              max={52}
+              value={interval}
+              onChange={(e) => setInterval(Math.max(1, Math.min(52, Number(e.target.value) || 1)))}
+            />
+          </label>
+        )}
+        {kind === 'monthly' && (
+          <label>
+            Day of month
+            <input
+              className="input"
+              type="number"
+              min={1}
+              max={31}
+              value={dayOfMonth}
+              onChange={(e) => setDayOfMonth(Math.max(1, Math.min(31, Number(e.target.value) || 1)))}
+            />
+          </label>
+        )}
         <label>
-          Every how many weeks
-          <input
-            className="input"
-            type="number"
-            min={1}
-            max={52}
-            value={interval}
-            onChange={(e) => setInterval(Math.max(1, Math.min(52, Number(e.target.value) || 1)))}
-          />
+          At
+          <input className="input" type="time" value={time} onChange={(e) => setTime(e.target.value)} required />
         </label>
-      )}
-      {kind === 'monthly' && (
-        <label>
-          Day of month
-          <input
-            className="input"
-            type="number"
-            min={1}
-            max={31}
-            value={dayOfMonth}
-            onChange={(e) => setDayOfMonth(Math.max(1, Math.min(31, Number(e.target.value) || 1)))}
-          />
-          <span className="muted small">Short months use their last day.</span>
+        <label className="span2">
+          Time zone
+          <select className="input" value={tz} onChange={(e) => setTz(e.target.value)}>
+            {!zones.includes(tz) && <option value={tz}>{tz}</option>}
+            {zones.map((z) => (
+              <option key={z} value={z}>
+                {z}
+              </option>
+            ))}
+          </select>
         </label>
-      )}
-      <label>
-        At
-        <input className="input" type="time" value={time} onChange={(e) => setTime(e.target.value)} required />
-      </label>
-      <label>
-        Time zone
-        <select className="input" value={tz} onChange={(e) => setTz(e.target.value)}>
-          {!zones.includes(tz) && <option value={tz}>{tz}</option>}
-          {zones.map((z) => (
-            <option key={z} value={z}>
-              {z}
-            </option>
-          ))}
-        </select>
-      </label>
-      <div className="row end">
-        <button type="button" className="btn btn-ghost" onClick={onCancel}>
-          Cancel
-        </button>
-        <button type="submit" className="btn btn-primary">
-          Save schedule
-        </button>
+      </div>
+      {kind === 'monthly' && <p className="muted small">Short months use their last day.</p>}
+      <div className="row between">
+        <div>
+          {onClear && (
+            <button type="button" className="btn btn-ghost small danger-text" onClick={onClear}>
+              Remove schedule
+            </button>
+          )}
+        </div>
+        <div className="row">
+          <button type="button" className="btn btn-ghost small" onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="submit" className="btn btn-primary small">
+            Save
+          </button>
+        </div>
       </div>
     </form>
   )

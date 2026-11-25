@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import Modal from './Modal'
 
 export default function NamePrompt({
   initial,
@@ -15,12 +16,11 @@ export default function NamePrompt({
     if (name.trim()) onSubmit(name.trim())
   }
   return (
-    <div className="modal-backdrop" role="dialog" aria-modal="true" aria-labelledby="name-title">
-      <form className="modal" onSubmit={submit}>
-        <h2 id="name-title">What should we call you?</h2>
+    <Modal title="What should we call you?" onClose={onCancel}>
+      <form className="stack" onSubmit={submit}>
         <p className="muted">
-          Your name is stamped on the history so teammates can see who changed what. It stays in this
-          browser and is not verified.
+          Your name is stamped on the history so teammates can see who changed what. It stays in this browser and
+          is not verified.
         </p>
         <input
           className="input"
@@ -39,6 +39,6 @@ export default function NamePrompt({
           </button>
         </div>
       </form>
-    </div>
+    </Modal>
   )
 }

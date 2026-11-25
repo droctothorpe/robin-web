@@ -1,13 +1,16 @@
 import { useEffect, useState } from 'react'
 import { api, type AuditEntry } from '../api'
 import { describeAudit, formatDateTime, relativeTime } from '../lib/format'
+import { ChevronIcon } from './Icons'
 
 export default function AuditLog({ token, version }: { token: string; version: number }) {
+  const [open, setOpen] = useState(false)
   const [entries, setEntries] = useState<AuditEntry[]>([])
   const [hasMore, setHasMore] = useState(false)
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
+    if (!open) return
     let cancelled = false
     api
       .audit(token)
@@ -20,7 +23,7 @@ export default function AuditLog({ token, version }: { token: string; version: n
     return () => {
       cancelled = true
     }
-  }, [token, version])
+  }, [token, version, open])
 
   async function more() {
     const last = entries[entries.length - 1]
@@ -36,23 +39,32 @@ export default function AuditLog({ token, version }: { token: string; version: n
   }
 
   return (
-    <section className="card">
-      <h2>History</h2>
-      {entries.length === 0 && <p className="muted">Nothing yet.</p>}
-      <ul className="audit">
-        {entries.map((e) => (
-          <li key={e.id} className={e.kind === 'webhook_failed' ? 'warn-text' : ''}>
-            <span className="actor">{e.actor}</span> {describeAudit(e)}
-            <time className="muted small" dateTime={e.at} title={formatDateTime(e.at)}>
-              {relativeTime(e.at)}
-            </time>
-          </li>
-        ))}
-      </ul>
-      {hasMore && (
-        <button type="button" className="btn btn-ghost small" onClick={more} disabled={loading}>
-          {loading ? 'Loading…' : 'Show older'}
-        </button>
+    <section className={`history${open ? ' open' : ''}`}>
+      <button type="button" className="history-toggle" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
+        <ChevronIcon className="chev" />
+        History
+      </button>
+      {open && (
+        <div className="history-body">
+          {entries.length === 0 && <p className="muted small">Nothing yet.</p>}
+          <ul className="audit">
+            {entries.map((e) => (
+              <li key={e.id} className={e.kind === 'webhook_failed' ? 'warn-text' : ''}>
+                <span>
+                  <span className="actor">{e.actor}</span> {describeAudit(e)}
+                </span>
+                <time className="muted small" dateTime={e.at} title={formatDateTime(e.at)}>
+                  {relativeTime(e.at)}
+                </time>
+              </li>
+            ))}
+          </ul>
+          {hasMore && (
+            <button type="button" className="btn btn-ghost small" onClick={more} disabled={loading}>
+              {loading ? 'Loading…' : 'Show older'}
+            </button>
+          )}
+        </div>
       )}
     </section>
   )
