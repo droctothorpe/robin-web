@@ -50,7 +50,7 @@ export default function Landing() {
         <p className="muted">
           Create a rotation. Share it. The link is the password. Round robin or
           select randomly. Advance manually or on a schedule. Webhook support
-          for notifications. See an <Link to="/demo">example</Link>.
+          for notifications. See an example <Link to="/demo">here</Link>.
         </p>
         {!creating && (
           <div className="hero-cta">
