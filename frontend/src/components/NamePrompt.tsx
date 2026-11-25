@@ -11,12 +11,13 @@ export default function NamePrompt({
   onCancel: () => void
 }) {
   const [name, setName] = useState(initial)
+  const changing = initial.trim().length > 0
   function submit(e: FormEvent) {
     e.preventDefault()
     if (name.trim()) onSubmit(name.trim())
   }
   return (
-    <Modal title="What should we call you?" onClose={onCancel}>
+    <Modal title={changing ? 'Your name' : 'What should we call you?'} onClose={onCancel}>
       <form className="stack" onSubmit={submit}>
         <p className="muted">
           Your name is stamped on the history so teammates can see who changed what. It stays in this browser and
@@ -35,7 +36,7 @@ export default function NamePrompt({
             Cancel
           </button>
           <button type="submit" className="btn btn-primary" disabled={!name.trim()}>
-            Continue
+            {changing ? 'Save' : 'Continue'}
           </button>
         </div>
       </form>

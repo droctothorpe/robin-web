@@ -32,3 +32,22 @@ def test_find_is_case_insensitive():
 def test_tokens_are_long_and_unique():
     a, b = ops.new_token(), ops.new_token()
     assert a != b and len(a) >= 22
+
+
+def test_random_pick_never_repeats_within_a_round():
+    members = ["a", "b", "c", "d"]
+    already: list[str] = []
+    seen = []
+    for _ in range(4):
+        picked, already = ops.random_pick(members, already)
+        seen.append(picked)
+    assert sorted(seen) == members
+    # Fifth pick starts a new round
+    picked, already = ops.random_pick(members, already)
+    assert already == [picked]
+
+
+def test_random_pick_forgets_departed_members():
+    picked, already = ops.random_pick(["a", "b"], ["zed", "a"])
+    assert picked == "b"
+    assert already == ["a", "b"]

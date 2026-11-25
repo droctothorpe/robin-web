@@ -17,6 +17,9 @@ class Rotation(Base):
     # Ordered list of member names. Always reassigned, never mutated in place,
     # so SQLAlchemy sees the change.
     members: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    # Members already chosen by Random pick in the current round. Cleared when
+    # everyone has been picked once, so nobody is picked twice in a round.
+    random_picked: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
     webhook_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     schedule: Mapped[dict | None] = mapped_column(JSON, nullable=True)
     schedule_paused: Mapped[bool] = mapped_column(Boolean, nullable=False, default=False)

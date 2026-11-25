@@ -62,10 +62,24 @@ def bump(members: list[str]) -> list[str]:
     return [members[1], members[0], *members[2:]]
 
 
-def random_pick(members: list[str]) -> str:
+def random_pick(members: list[str], already: list[str]) -> tuple[str, list[str]]:
+    """Pick a member nobody has drawn this round.
+
+    Returns (picked, updated_already). When everyone has been picked the round
+    resets and a new one begins with this pick.
+    """
     if not members:
         raise ValueError("no members to pick from")
-    return choice(members)
+    taken = {a.casefold() for a in already}
+    pool = [m for m in members if m.casefold() not in taken]
+    if not pool:
+        pool = list(members)
+        already = []
+    picked = choice(pool)
+    # Drop names that have since left the rotation so the list cannot grow stale.
+    live = {m.casefold() for m in members}
+    kept = [a for a in already if a.casefold() in live]
+    return picked, [*kept, picked]
 
 
 def same_set(a: list[str], b: list[str]) -> bool:

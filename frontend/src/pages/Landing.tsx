@@ -2,13 +2,15 @@ import { useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api, ApiError } from '../api'
 import { parseMembers, relativeTime } from '../lib/format'
-import { forgetRotation, getDisplayName, getSavedRotations, rememberRotation, setDisplayName } from '../lib/storage'
+import { useIdentity } from '../identity'
+import { forgetRotation, getSavedRotations, rememberRotation, setDisplayName } from '../lib/storage'
 
 export default function Landing() {
   const navigate = useNavigate()
   const [name, setName] = useState('')
   const [membersText, setMembersText] = useState('')
-  const [who, setWho] = useState(() => getDisplayName() ?? '')
+  const identity = useIdentity()
+  const [who, setWho] = useState(() => identity.who ?? '')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [saved, setSaved] = useState(getSavedRotations)

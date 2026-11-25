@@ -14,6 +14,7 @@ export type RotationState = {
   name: string
   members: string[]
   current: string | null
+  random_picked: string[]
   can_edit: boolean
   view_token: string
   edit_token?: string

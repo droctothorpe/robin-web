@@ -5,13 +5,13 @@ import AuditLog from '../components/AuditLog'
 import CopyButton from '../components/CopyButton'
 import { ShareIcon } from '../components/Icons'
 import MemberList from '../components/MemberList'
-import NamePrompt from '../components/NamePrompt'
 import SchedulePanel from '../components/SchedulePanel'
 import ShareModal from '../components/ShareModal'
 import WebhookPanel from '../components/WebhookPanel'
 import { useRotation } from '../hooks/useRotation'
 import { daysUntil } from '../lib/format'
-import { forgetRotation, getDisplayName, rememberRotation, setDisplayName } from '../lib/storage'
+import { useIdentity } from '../identity'
+import { forgetRotation, rememberRotation } from '../lib/storage'
 
 const EXPIRY_WARNING_DAYS = 30
 
@@ -48,16 +48,13 @@ export default function RotationPage() {
   return <Rotation token={token} state={status.state} apply={apply} />
 }
 
-type Pending = ((who: string) => Promise<void>) | null
-
 function Rotation({ token, state, apply }: { token: string; state: RotationState; apply: (s: RotationState) => void }) {
   const [params, setParams] = useSearchParams()
   const isNew = params.get('new') === '1'
   const [toast, setToast] = useState<string | null>(null)
   const [picked, setPicked] = useState<string | null>(null)
-  const [pending, setPending] = useState<Pending>(null)
   const [sharing, setSharing] = useState(false)
-  const [who, setWho] = useState<string | null>(getDisplayName)
+  const { requireName } = useIdentity()
   const canEdit = state.can_edit
 
   useEffect(() => {
@@ -72,41 +69,26 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
 
   /** Run a mutation with the display name, prompting for one first if needed. */
   const act = useCallback(
-    (fn: (who: string) => Promise<RotationState | void>): Promise<boolean> =>
-      new Promise((resolve) => {
-        const go = async (name: string) => {
-          try {
-            const result = await fn(name)
-            if (result) apply(result)
-            resolve(true)
-          } catch (e) {
-            setToast(e instanceof ApiError ? e.message : 'Could not reach the server.')
-            resolve(false)
-          }
-        }
-        if (who) void go(who)
-        else
-          setPending(() => async (name: string) => {
-            await go(name)
-          })
-      }),
-    [who, apply],
+    async (fn: (who: string) => Promise<RotationState | void>): Promise<boolean> => {
+      const name = await requireName()
+      if (!name) return false
+      try {
+        const result = await fn(name)
+        if (result) apply(result)
+        return true
+      } catch (e) {
+        setToast(e instanceof ApiError ? e.message : 'Could not reach the server.')
+        return false
+      }
+    },
+    [requireName, apply],
   )
-
-  function onName(name: string) {
-    setDisplayName(name)
-    setWho(name)
-    const p = pending
-    setPending(null)
-    if (p) void p(name)
-  }
 
   const days = daysUntil(state.expires_at)
   const editUrl = state.edit_token ? `${window.location.origin}/r/${state.edit_token}` : null
 
   return (
     <main className="rotation">
-      {pending && <NamePrompt initial="" onSubmit={onName} onCancel={() => setPending(null)} />}
       {sharing && (
         <ShareModal
           editToken={state.edit_token}
@@ -156,9 +138,7 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
       <Header
         state={state}
         canEdit={canEdit}
-        who={who}
         onRename={(n) => act((w) => api.rename(token, n, w))}
-        onChangeName={() => setPending(() => async () => undefined)}
         onShare={() => setSharing(true)}
       />
 
@@ -178,7 +158,7 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
               disabled={state.members.length < 2}
               onClick={() => act((w) => api.advance(token, w))}
             >
-              Advance
+              Next
             </button>
             <button
               type="button"
@@ -207,7 +187,15 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
         )}
         {picked && (
           <p className="picked">
-            Random pick: <strong>{picked}</strong>
+            <span>
+              Random pick: <strong>{picked}</strong>
+              <span className="muted small">
+                {' '}
+                {remainingInRound(state) === 0
+                  ? 'Everyone has had a turn; the next pick starts a new round.'
+                  : `${remainingInRound(state)} left before anyone repeats.`}
+              </span>
+            </span>
             <button type="button" className="btn btn-ghost small" onClick={() => setPicked(null)}>
               Dismiss
             </button>
@@ -241,19 +229,20 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
   )
 }
 
+function remainingInRound(state: RotationState): number {
+  const picked = new Set(state.random_picked.map((p) => p.toLowerCase()))
+  return state.members.filter((m) => !picked.has(m.toLowerCase())).length
+}
+
 function Header({
   state,
   canEdit,
-  who,
   onRename,
-  onChangeName,
   onShare,
 }: {
   state: RotationState
   canEdit: boolean
-  who: string | null
   onRename: (name: string) => Promise<boolean>
-  onChangeName: () => void
   onShare: () => void
 }) {
   const [editing, setEditing] = useState(false)
@@ -294,15 +283,7 @@ function Header({
             {state.name}
           </h1>
         )}
-        <div className="muted small">
-          {canEdit ? (
-            <button type="button" className="link-action" onClick={onChangeName}>
-              {who ? `You are ${who}` : 'Set your name'}
-            </button>
-          ) : (
-            'View only'
-          )}
-        </div>
+        {!canEdit && <div className="muted small">View only</div>}
       </div>
       <button type="button" className="icon-btn share" onClick={onShare} aria-label="Share">
         <ShareIcon />

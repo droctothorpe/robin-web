@@ -18,8 +18,9 @@
   color-scheme: light dark;
 }
 
+/* Dark: follows the OS unless the viewer picked a theme. */
 @media (prefers-color-scheme: dark) {
-  :root {
+  :root:not([data-theme="light"]) {
     --bg: #0f1216;
     --surface: #181c22;
     --surface-2: #1f242b;
@@ -36,6 +37,22 @@
     --shadow: 0 1px 0 rgba(255, 255, 255, 0.02);
   }
 }
+:root[data-theme="dark"] {
+    --bg: #0f1216;
+    --surface: #181c22;
+    --surface-2: #1f242b;
+    --text: #e9ebef;
+    --muted: #8e97a5;
+    --border: #262c35;
+    --accent: #6fb6cd;
+    --accent-text: #0b171c;
+    --accent-soft: #17303a;
+    --danger: #ef7a82;
+    --danger-soft: #3a1d20;
+    --warn: #f1c266;
+    --warn-soft: #3a2e14;
+    --shadow: 0 1px 0 rgba(255, 255, 255, 0.02);
+  }
 
 * {
   box-sizing: border-box;
@@ -88,7 +105,29 @@ button {
 .topbar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 10px 0 22px;
+}
+.topbar-actions {
+  display: flex;
+  gap: 4px;
+}
+.icon-btn.profile.named {
+  background: var(--accent);
+  color: var(--accent-text);
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  margin: 2px;
+}
+.icon-btn.profile.named:hover {
+  background: color-mix(in srgb, var(--accent) 85%, black);
+  color: var(--accent-text);
+}
+.initial {
+  font-weight: 700;
+  font-size: 0.9rem;
+  line-height: 1;
 }
 .brand {
   display: inline-flex;

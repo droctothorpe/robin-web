@@ -62,7 +62,16 @@ def test_random_pick_is_logged_and_does_not_reorder(client, rotation):
     r = client.post(f"/api/r/{t}/random", headers=H).json()
     assert r["member"] in rotation["members"]
     assert r["members"] == rotation["members"]
+    assert r["random_picked"] == [r["member"]]
     assert kinds(client, t)[0] == "random_pick"
+
+
+def test_random_pick_covers_everyone_before_repeating(client, rotation):
+    t = rotation["edit_token"]
+    picks = [client.post(f"/api/r/{t}/random", headers=H).json()["member"] for _ in range(3)]
+    assert sorted(picks) == sorted(rotation["members"])
+    r = client.post(f"/api/r/{t}/random", headers=H).json()
+    assert r["random_picked"] == [r["member"]]
 
 
 def test_members_add_remove_reorder(client, rotation):

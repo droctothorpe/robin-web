@@ -260,10 +260,11 @@ def bump(db: Session, r: Rotation, actor: str) -> Notification | None:
 
 def random_pick(db: Session, r: Rotation, actor: str) -> str:
     try:
-        picked = ops.random_pick(r.members)
+        picked, r.random_picked = ops.random_pick(r.members, r.random_picked or [])
     except ValueError as e:
         raise Invalid(str(e)) from e
-    _record(db, r, "random_pick", actor, {"member": picked})
+    remaining = len(r.members) - len(r.random_picked)
+    _record(db, r, "random_pick", actor, {"member": picked, "remaining_in_round": remaining})
     _commit(db, r)
     return picked
 

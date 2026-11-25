@@ -63,6 +63,7 @@ def state(r: Rotation, can_edit: bool) -> dict:
         "name": r.name,
         "members": r.members,
         "current": r.current,
+        "random_picked": r.random_picked or [],
         "can_edit": can_edit,
         "view_token": r.view_token,
         "schedule": r.schedule,

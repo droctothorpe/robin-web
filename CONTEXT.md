@@ -25,7 +25,12 @@ Robin equitably distributes recurring work across a team by taking turns.
   position and the next Member becomes Current.
 
 **Random pick**
-: Choose one Member at random without changing the Rotation's order.
+: Choose one Member at random without changing the Rotation's order. Picks
+  are drawn without replacement within a Round.
+
+**Round**
+: One pass of Random picks in which every Member is picked exactly once.
+  When the last unpicked Member is drawn, the next pick starts a new Round.
 
 **Schedule**
 : A rule that Advances the Rotation automatically at set times, expressed as
