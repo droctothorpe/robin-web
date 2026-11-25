@@ -36,7 +36,7 @@ export default function Landing() {
       <section className="hero">
         <h1>Distribute work equitably and transparently</h1>
         <p className="muted">
-          Create a rotation. Share it. The link is the password. Round robin and / or select randomly. Advance
+          Create a rotation. Share it. The link is the password. Round robin or select randomly. Advance
           manually or on a schedule. Add a webhook.
         </p>
       </section>
