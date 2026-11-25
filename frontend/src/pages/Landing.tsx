@@ -40,7 +40,7 @@ export default function Landing() {
           manually or on a schedule. Webhook support for notifications.
         </p>
         <p>
-          <Link to="/demo">See an example</Link>
+          See an <Link to="/demo">example</Link>.
         </p>
       </section>
 
