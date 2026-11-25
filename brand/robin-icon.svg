@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="1024" height="1024">
+  <!-- Robin app icon: the header bird on a soft blue tile, with room around it. -->
+  <rect width="64" height="64" rx="12" fill="#e1eef9"/>
+  <g transform="translate(32 33) scale(0.82) translate(-32 -34)">
+    <circle cx="32" cy="34" r="23" fill="#7a6657"/>
+    <ellipse cx="32" cy="45" rx="15" ry="11.6" fill="#f0862b"/>
+    <path d="M11 30 Q5 42 14 52 Q19 44 21 36z" fill="#5a4a3e"/>
+    <path d="M53 30 Q59 42 50 52 Q45 44 43 36z" fill="#5a4a3e"/>
+    <circle cx="22" cy="26" r="4" fill="#f3e7d3"/><circle cx="42" cy="26" r="4" fill="#f3e7d3"/>
+    <circle cx="22" cy="26" r="2.6" fill="#1d1f23"/><circle cx="42" cy="26" r="2.6" fill="#1d1f23"/>
+    <polygon points="32,29 36,32 32,37 28,32" fill="#f2b335"/>
+  </g>
+</svg>
