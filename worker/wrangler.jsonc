@@ -15,7 +15,7 @@
       "binding": "DB",
       "database_name": "robin",
       // Replace with the id printed by `wrangler d1 create robin`.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "643c2c97-ff8e-4dd8-bb8c-d6078e9e470c",
       "migrations_dir": "migrations"
     }
   ],
