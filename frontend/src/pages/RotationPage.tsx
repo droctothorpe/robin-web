@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react'
 import { Link, useParams, useSearchParams } from 'react-router-dom'
-import { api, ApiError, type RotationState, type Schedule } from '../api'
+import { ApiError, type RotationState, type Schedule } from '../api'
+import { useApi } from '../apiContext'
 import AuditLog from '../components/AuditLog'
 import CopyButton from '../components/CopyButton'
 import DeleteModal from '../components/DeleteModal'
@@ -51,19 +52,31 @@ export default function RotationPage() {
   return <Rotation token={token} state={status.state} apply={apply} />
 }
 
-function Rotation({ token, state, apply }: { token: string; state: RotationState; apply: (s: RotationState) => void }) {
+export function Rotation({
+  token,
+  state,
+  apply,
+  demo = false,
+}: {
+  token: string
+  state: RotationState
+  apply: (s: RotationState) => void
+  /** The sample on /demo: nothing is remembered, and no name is asked for. */
+  demo?: boolean
+}) {
+  const api = useApi()
   const [params, setParams] = useSearchParams()
   const isNew = params.get('new') === '1'
   const [toast, setToast] = useState<string | null>(null)
   const [picked, setPicked] = useState<string | null>(null)
   const [sharing, setSharing] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const { requireName } = useIdentity()
+  const { who, requireName } = useIdentity()
   const canEdit = state.can_edit
 
   useEffect(() => {
-    rememberRotation({ token, name: state.name, canEdit })
-  }, [token, state.name, canEdit])
+    if (!demo) rememberRotation({ token, name: state.name, canEdit })
+  }, [token, state.name, canEdit, demo])
 
   useEffect(() => {
     if (!toast) return
@@ -74,7 +87,7 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
   /** Run a mutation with the display name, prompting for one first if needed. */
   const act = useCallback(
     async (fn: (who: string) => Promise<RotationState | void>): Promise<boolean> => {
-      const name = await requireName()
+      const name = demo ? (who ?? 'You') : await requireName()
       if (!name) return false
       try {
         const result = await fn(name)
@@ -85,7 +98,7 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
         return false
       }
     },
-    [requireName, apply],
+    [requireName, apply, demo, who],
   )
 
   const days = daysUntil(state.expires_at)
@@ -117,6 +130,17 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
       {toast && (
         <div className="toast" role="status">
           {toast}
+        </div>
+      )}
+
+      {demo && (
+        <div className="banner">
+          <div>
+            <strong>This is a sample rotation.</strong> Try anything. Changes stay in this tab and vanish on reload.
+          </div>
+          <Link to="/" className="btn btn-primary small">
+            Make your own
+          </Link>
         </div>
       )}
 

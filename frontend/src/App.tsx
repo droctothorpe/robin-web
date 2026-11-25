@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, Route, Routes } from 'react-router-dom'
 import { MoonIcon, SunIcon, UserIcon } from './components/Icons'
 import { IdentityProvider, useIdentity } from './identity'
+import Demo from './pages/Demo'
 import Landing from './pages/Landing'
 import RotationPage from './pages/RotationPage'
 import { applyTheme, effectiveTheme, getTheme, setTheme } from './theme'
@@ -14,6 +15,9 @@ export default function App() {
         <TopBar />
         <Routes>
           <Route path="/" element={<Landing />} />
+          <Route path="/demo" element={<Demo canEdit />} />
+          <Route path="/r/sample-edit-link" element={<Demo canEdit />} />
+          <Route path="/r/sample-view-link" element={<Demo canEdit={false} />} />
           <Route path="/r/:token" element={<RotationPage />} />
           <Route path="*" element={<p className="muted center">Nothing here.</p>} />
         </Routes>

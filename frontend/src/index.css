@@ -205,6 +205,9 @@ button {
   font-weight: 500;
   transition: background 0.12s, border-color 0.12s, transform 0.05s;
 }
+a.btn {
+  text-decoration: none;
+}
 .btn:hover:not(:disabled) {
   background: var(--surface-2);
   border-color: color-mix(in srgb, var(--border) 50%, var(--muted));

@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react'
-import { api, type AuditEntry } from '../api'
+import { type AuditEntry } from '../api'
+import { useApi } from '../apiContext'
 import { describeAudit, formatDateTime, relativeTime } from '../lib/format'
 import Disclosure from './Disclosure'
 
 export default function AuditLog({ token, version }: { token: string; version: number }) {
+  const api = useApi()
   const [open, setOpen] = useState(false)
   const [entries, setEntries] = useState<AuditEntry[]>([])
   const [hasMore, setHasMore] = useState(false)
@@ -23,7 +25,7 @@ export default function AuditLog({ token, version }: { token: string; version: n
     return () => {
       cancelled = true
     }
-  }, [token, version, open])
+  }, [api, token, version, open])
 
   async function more() {
     const last = entries[entries.length - 1]

@@ -39,6 +39,9 @@ export default function Landing() {
           Create a rotation. Share it. The link is the password. Round robin or select randomly. Advance
           manually or on a schedule. Webhook support for notifications.
         </p>
+        <p>
+          <Link to="/demo">See an example</Link>
+        </p>
       </section>
 
       <form className="card stack" onSubmit={submit}>

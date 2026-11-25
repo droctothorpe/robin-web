@@ -1,9 +1,11 @@
 import { useState, type FormEvent } from 'react'
-import { api, ApiError } from '../api'
+import { ApiError } from '../api'
+import { useApi } from '../apiContext'
 import { forgetRotation } from '../lib/storage'
 import Modal from './Modal'
 
 export default function DeleteModal({ token, name, onClose }: { token: string; name: string; onClose: () => void }) {
+  const api = useApi()
   const [confirm, setConfirm] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
