@@ -80,6 +80,13 @@ export function createSandbox(canEdit: boolean): { api: RotationApi; initial: Ro
     { id: 1, at: createdAt, actor: 'Alex', kind: 'created', detail: { name, members: ['Alex', 'Sam', 'Priya', 'Dana'] } },
   ]
   let nextId = 6
+  // Undo reverts the newest advance or bump unless the order changed since.
+  const ORDER_KINDS = new Set(['advanced', 'bumped', 'undone', 'member_added', 'member_removed', 'members_reordered', 'created'])
+  function undoable(): 'advanced' | 'bumped' | null {
+    if (members.length < 2) return null
+    const last = audit.find((e) => ORDER_KINDS.has(e.kind))
+    return last && (last.kind === 'advanced' || last.kind === 'bumped') ? last.kind : null
+  }
 
   function record(kind: string, actor: string, detail: Record<string, unknown> = {}) {
     audit.unshift({ id: nextId++, at: new Date().toISOString(), actor, kind, detail })
@@ -102,6 +109,7 @@ export function createSandbox(canEdit: boolean): { api: RotationApi; initial: Ro
       created_at: createdAt,
       expires_at: new Date(new Date(lastVisited).getTime() + TTL_DAYS * DAY_MS).toISOString(),
       ttl_days: TTL_DAYS,
+      can_undo: canEdit && undoable() !== null,
     }
     if (canEdit) {
       s.edit_token = SAMPLE_EDIT_TOKEN
@@ -146,6 +154,15 @@ export function createSandbox(canEdit: boolean): { api: RotationApi; initial: Ro
         const skipped = members[0]
         members = [members[1], members[0], ...members.slice(2)]
         record('bumped', who(w), { skipped, to: members[0] })
+        return state()
+      }),
+    undo: (_t, w) =>
+      mutate(() => {
+        const kind = undoable()
+        if (!kind) throw invalid('Nothing to undo.')
+        const before = members
+        members = kind === 'advanced' ? [before[before.length - 1], ...before.slice(0, -1)] : [before[1], before[0], ...before.slice(2)]
+        record('undone', who(w), { of: kind, from: before[0], to: members[0] })
         return state()
       }),
     random: (_t, w) =>

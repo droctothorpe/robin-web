@@ -24,6 +24,10 @@ Robin equitably distributes recurring work across a team by taking turns.
 : Skip the Current Member because they are unavailable: they move to second
   position and the next Member becomes Current.
 
+**Undo**
+: Revert the most recent Advance or Bump, restoring the previous Current. Only
+  available while nothing else has changed the order since.
+
 **Random pick**
 : Choose one Member at random without changing the Rotation's order. Picks
   are drawn without replacement within a Round.

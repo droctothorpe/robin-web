@@ -27,6 +27,7 @@ export type RotationState = {
   created_at: string
   expires_at: string
   ttl_days: number
+  can_undo: boolean
 }
 
 export type AuditEntry = {
@@ -84,6 +85,7 @@ export const api = {
     request<AuditPage>('GET', `/r/${token}/audit?limit=${limit}${before ? `&before=${before}` : ''}`),
   advance: (t: string, who: string) => request<RotationState>('POST', `/r/${t}/advance`, undefined, who),
   bump: (t: string, who: string) => request<RotationState>('POST', `/r/${t}/bump`, undefined, who),
+  undo: (t: string, who: string) => request<RotationState>('POST', `/r/${t}/undo`, undefined, who),
   random: (t: string, who: string) =>
     request<RotationState & { member: string }>('POST', `/r/${t}/random`, undefined, who),
   addMember: (t: string, name: string, who: string) =>

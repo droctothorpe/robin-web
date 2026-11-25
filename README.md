@@ -104,7 +104,7 @@ the `X-Display-Name` header.
 | GET | `/r/{token}` | view or edit |
 | GET | `/r/{token}/audit?before=&limit=` | view or edit |
 | GET | `/r/{token}/ws` | view or edit, WebSocket for live updates |
-| POST | `/r/{token}/advance`, `/bump`, `/random` | edit |
+| POST | `/r/{token}/advance`, `/bump`, `/undo`, `/random` | edit |
 | POST / DELETE / PUT | `/r/{token}/members[/{name}]` | edit |
 | PATCH | `/r/{token}` | edit (rename) |
 | PUT / DELETE | `/r/{token}/schedule` | edit |
@@ -132,4 +132,4 @@ Webhook payload:
 ```
 
 Slack reads `text`, Discord reads `content`, and anything else can use the
-structured fields. `trigger` is `manual`, `bump`, or `schedule`.
+structured fields. `trigger` is `manual`, `bump`, `undo`, or `schedule`.

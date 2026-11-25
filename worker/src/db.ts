@@ -189,3 +189,16 @@ export function recordCreation(db: D1Database, ipHash: string, at: Date): D1Prep
 export function pruneCreations(db: D1Database, before: Date): D1PreparedStatement {
   return db.prepare('DELETE FROM creations WHERE created_at < ?').bind(before.toISOString())
 }
+
+/** The newest audit entry that changed the member order (or created the rotation). Drives Undo. */
+export async function lastOrderEvent(db: D1Database, rotationId: string): Promise<{ kind: string } | null> {
+  const row = await db
+    .prepare(
+      `SELECT kind FROM audit_entries WHERE rotation_id = ?
+         AND kind IN ('advanced', 'bumped', 'undone', 'member_added', 'member_removed', 'members_reordered', 'created')
+       ORDER BY id DESC LIMIT 1`,
+    )
+    .bind(rotationId)
+    .first<{ kind: string }>()
+  return row ? { kind: row.kind } : null
+}

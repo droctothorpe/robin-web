@@ -38,7 +38,7 @@ async function body<T>(c: { req: { json: () => Promise<unknown> } }, schema: z.Z
 
 const iso = (d: Date | null) => (d ? d.toISOString() : null)
 
-function state(env: Env, r: Rotation, canEdit: boolean): Record<string, unknown> {
+async function state(env: Env, r: Rotation, canEdit: boolean): Promise<Record<string, unknown>> {
   const out: Record<string, unknown> = {
     name: r.name,
     members: r.members,
@@ -54,6 +54,7 @@ function state(env: Env, r: Rotation, canEdit: boolean): Record<string, unknown>
     created_at: r.createdAt.toISOString(),
     expires_at: service.expiresAt(env, r).toISOString(),
     ttl_days: ttlDays(env),
+    can_undo: canEdit ? (await service.undoable(env, r)) !== null : false,
   }
   if (canEdit) {
     out.edit_token = r.editToken
@@ -90,13 +91,13 @@ app.post('/api/rotations', async (c) => {
   const input = await body(c, CreateIn)
   await service.enforceCreateLimit(c.env, clientIp(c), createLimit(c.env))
   const r = await service.createRotation(c.env, input.name, input.members, c.get('actor'))
-  return c.json(state(c.env, r, true), 201)
+  return c.json(await state(c.env, r, true), 201)
 })
 
 app.get('/api/r/:token', async (c) => {
   const { rotation, canEdit } = await service.resolve(c.env, c.req.param('token'))
   await service.touch(c.env, rotation)
-  return c.json(state(c.env, rotation, canEdit))
+  return c.json(await state(c.env, rotation, canEdit))
 })
 
 app.get('/api/r/:token/audit', async (c) => {
@@ -129,7 +130,7 @@ edit.patch('/', async (c) => {
   const { name } = await body(c, NameIn)
   const r = c.get('rotation')
   await service.rename(c.env, r, name, c.get('actor'))
-  return c.json(state(c.env, r, true))
+  return c.json(await state(c.env, r, true))
 })
 
 edit.post('/delete', async (c) => {
@@ -142,80 +143,87 @@ edit.post('/regenerate', async (c) => {
   const { which } = await body(c, RegenerateIn)
   const r = c.get('rotation')
   await service.regenerateToken(c.env, r, which, c.get('actor'))
-  return c.json(state(c.env, r, true))
+  return c.json(await state(c.env, r, true))
 })
 
 edit.post('/members', async (c) => {
   const { name } = await body(c, NameIn)
   const r = c.get('rotation')
   await service.addMember(c.env, r, name, c.get('actor'))
-  return c.json(state(c.env, r, true))
+  return c.json(await state(c.env, r, true))
 })
 
 edit.delete('/members/:name', async (c) => {
   const r = c.get('rotation')
   await service.removeMember(c.env, r, c.req.param('name'), c.get('actor'))
-  return c.json(state(c.env, r, true))
+  return c.json(await state(c.env, r, true))
 })
 
 edit.put('/members', async (c) => {
   const { members } = await body(c, MembersIn)
   const r = c.get('rotation')
   await service.reorderMembers(c.env, r, members, c.get('actor'))
-  return c.json(state(c.env, r, true))
+  return c.json(await state(c.env, r, true))
 })
 
 edit.post('/advance', async (c) => {
   const r = c.get('rotation')
   const n = await service.advance(c.env, r, c.get('actor'))
   c.executionCtx.waitUntil(deliver(c.env, n))
-  return c.json(state(c.env, r, true))
+  return c.json(await state(c.env, r, true))
 })
 
 edit.post('/bump', async (c) => {
   const r = c.get('rotation')
   const n = await service.bump(c.env, r, c.get('actor'))
   c.executionCtx.waitUntil(deliver(c.env, n))
-  return c.json(state(c.env, r, true))
+  return c.json(await state(c.env, r, true))
+})
+
+edit.post('/undo', async (c) => {
+  const r = c.get('rotation')
+  const n = await service.undo(c.env, r, c.get('actor'))
+  c.executionCtx.waitUntil(deliver(c.env, n))
+  return c.json(await state(c.env, r, true))
 })
 
 edit.post('/random', async (c) => {
   const r = c.get('rotation')
   const member = await service.randomPick(c.env, r, c.get('actor'))
-  return c.json({ member, ...state(c.env, r, true) })
+  return c.json({ member, ...(await state(c.env, r, true)) })
 })
 
 edit.put('/schedule', async (c) => {
   const schedule = await body(c, ScheduleSchema)
   const r = c.get('rotation')
   await service.setSchedule(c.env, r, schedule, c.get('actor'))
-  return c.json(state(c.env, r, true))
+  return c.json(await state(c.env, r, true))
 })
 
 edit.delete('/schedule', async (c) => {
   const r = c.get('rotation')
   await service.clearSchedule(c.env, r, c.get('actor'))
-  return c.json(state(c.env, r, true))
+  return c.json(await state(c.env, r, true))
 })
 
 edit.post('/schedule/paused', async (c) => {
   const { paused } = await body(c, PausedIn)
   const r = c.get('rotation')
   await service.setPaused(c.env, r, paused, c.get('actor'))
-  return c.json(state(c.env, r, true))
+  return c.json(await state(c.env, r, true))
 })
 
 edit.put('/webhook', async (c) => {
   const { url } = await body(c, WebhookIn)
   const r = c.get('rotation')
   await service.setWebhook(c.env, r, url, c.get('actor'))
-  return c.json(state(c.env, r, true))
+  return c.json(await state(c.env, r, true))
 })
 
 edit.delete('/webhook', async (c) => {
   const r = c.get('rotation')
   await service.clearWebhook(c.env, r, c.get('actor'))
-  return c.json(state(c.env, r, true))
+  return c.json(await state(c.env, r, true))
 })
 
 app.route('/api/r/:token', edit)

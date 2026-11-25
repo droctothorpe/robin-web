@@ -204,6 +204,23 @@ export async function bump(env: Env, r: Rotation, actor: string): Promise<Notifi
   return notification(env, r, before[0], 'bump')
 }
 
+/** Which turn change Undo would revert right now, if any. */
+export async function undoable(env: Env, r: Rotation): Promise<'advanced' | 'bumped' | null> {
+  if (r.members.length < 2) return null
+  const last = await db.lastOrderEvent(env.DB, r.id)
+  return last && (last.kind === 'advanced' || last.kind === 'bumped') ? last.kind : null
+}
+
+/** Revert the most recent Advance or Bump, as long as nothing has changed the order since. */
+export async function undo(env: Env, r: Rotation, actor: string): Promise<Notification | null> {
+  const kind = await undoable(env, r)
+  if (!kind) throw invalid('Nothing to undo.')
+  const before = r.members
+  r.members = kind === 'advanced' ? [before[before.length - 1], ...before.slice(0, -1)] : ops.bump(before)
+  await commit(env, r, 'undone', actor, { of: kind, from: before[0], to: r.members[0] })
+  return notification(env, r, before[0], 'undo')
+}
+
 export async function randomPick(env: Env, r: Rotation, actor: string): Promise<string> {
   const { picked, already } = wrap(() => ops.randomPick(r.members, r.randomPicked))
   r.randomPicked = already

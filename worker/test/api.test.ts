@@ -76,6 +76,29 @@ describe('rotations API', () => {
     expect(entries[1].detail).toEqual({ from: 'Alex', to: 'Sam', trigger: 'manual' })
   })
 
+  it('undo reverts the last advance or bump, once, until the order changes again', async () => {
+    const t = rotation.edit_token
+    expect(rotation.can_undo).toBe(false)
+    let r = await call('POST', `/api/r/${t}/advance`, undefined, H)
+    expect(r.json.can_undo).toBe(true)
+    r = await call('POST', `/api/r/${t}/undo`, undefined, H)
+    expect(r.status).toBe(200)
+    expect(r.json.members).toEqual(['Alex', 'Sam', 'Priya'])
+    expect(r.json.can_undo).toBe(false)
+    expect((await call('POST', `/api/r/${t}/undo`, undefined, H)).status).toBe(422)
+    r = await call('POST', `/api/r/${t}/bump`, undefined, H)
+    expect(r.json.members).toEqual(['Sam', 'Alex', 'Priya'])
+    r = await call('POST', `/api/r/${t}/undo`, undefined, H)
+    expect(r.json.members).toEqual(['Alex', 'Sam', 'Priya'])
+    // A membership change after an advance makes that advance final.
+    await call('POST', `/api/r/${t}/advance`, undefined, H)
+    r = await call('POST', `/api/r/${t}/members`, { name: 'Dana' }, H)
+    expect(r.json.can_undo).toBe(false)
+    expect((await call('POST', `/api/r/${t}/undo`, undefined, H)).status).toBe(422)
+    const entries = (await call('GET', `/api/r/${t}/audit`)).json.entries.map((e: Json) => e.kind)
+    expect(entries.slice(0, 4)).toEqual(['member_added', 'advanced', 'undone', 'bumped'])
+  })
+
   it('advance requires two members', async () => {
     const solo = await createRotation('Solo', ['Only'])
     expect((await call('POST', `/api/r/${solo.edit_token}/advance`, undefined, H)).status).toBe(422)

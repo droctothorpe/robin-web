@@ -197,6 +197,15 @@ export function Rotation({
               <button
                 type="button"
                 className="btn"
+                disabled={!state.can_undo}
+                title="Put back whoever was up before the last Advance or Skip"
+                onClick={() => act((w) => api.undo(token, w))}
+              >
+                Undo
+              </button>
+              <button
+                type="button"
+                className="btn"
                 disabled={state.members.length === 0}
                 onClick={() =>
                   act(async (w) => {

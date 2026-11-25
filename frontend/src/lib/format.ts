@@ -49,6 +49,8 @@ export function describeAudit(e: AuditEntry): string {
         : `advanced: ${str(d.from)} → ${str(d.to)}`
     case 'bumped':
       return `bumped ${str(d.skipped)}; ${str(d.to)} is up`
+    case 'undone':
+      return `undid the last ${d.of === 'bumped' ? 'skip' : 'advance'}: ${str(d.from)} → ${str(d.to)}`
     case 'random_pick':
       return `randomly picked ${str(d.member)}`
     case 'schedule_set': {
