@@ -26,7 +26,7 @@
   "triggers": { "crons": ["17 * * * *"] },
   "vars": {
     // Base URL used in webhook messages. Set to your deployed origin.
-    "PUBLIC_BASE_URL": "https://robin.robin-worker.workers.dev",
+    "PUBLIC_BASE_URL": "https://robin.droctothorpe.workers.dev",
     "ROTATION_TTL_DAYS": "180",
     "CREATE_LIMIT_PER_HOUR": "20",
     "WEBHOOK_TIMEOUT_SECONDS": "5"
