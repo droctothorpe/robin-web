@@ -34,11 +34,8 @@ export default function Landing() {
   return (
     <main className="stack landing">
       <section className="hero">
-        <h1>Whose turn is it?</h1>
-        <p className="muted">
-          Make a rotation, share one link, and everyone can see who is up. No accounts. Rotate by hand or on a
-          schedule.
-        </p>
+        <h1>Equitable and transparent rotations.</h1>
+        <p className="muted">Create a rotation and share it. The link is the password. Everyone can see who's up.</p>
       </section>
 
       <form className="card stack" onSubmit={submit}>
