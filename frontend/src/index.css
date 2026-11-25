@@ -288,6 +288,24 @@ button {
   border-color: var(--accent);
   color: var(--accent);
 }
+.icon-btn.trash:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+.head-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.pick-result {
+  font-size: 2rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 18px 12px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  overflow-wrap: anywhere;
+}
 .link-action {
   appearance: none;
   border: none;
@@ -541,19 +559,6 @@ h1.editable:hover {
 .actions .btn {
   min-width: 100px;
 }
-.picked {
-  margin: 0 16px 16px;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  background: var(--accent-soft);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.picked .btn {
-  margin-left: auto;
-}
-
 /* Settings rows */
 .settings {
   background: var(--surface);
@@ -666,17 +671,6 @@ h1.editable:hover {
 .audit time {
   white-space: nowrap;
   flex-shrink: 0;
-}
-
-.danger-zone {
-  padding: 4px 2px;
-  font-size: 0.9rem;
-}
-.danger-zone .setting-form {
-  border: 1px solid color-mix(in srgb, var(--danger) 40%, var(--border));
-  border-radius: var(--radius);
-  background: var(--surface);
-  padding: 16px;
 }
 
 /* Banners, modals, toast */

@@ -3,8 +3,10 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { api, ApiError, type RotationState, type Schedule } from '../api'
 import AuditLog from '../components/AuditLog'
 import CopyButton from '../components/CopyButton'
-import { ShareIcon } from '../components/Icons'
+import DeleteModal from '../components/DeleteModal'
+import { ShareIcon, TrashIcon } from '../components/Icons'
 import MemberList from '../components/MemberList'
+import PickModal from '../components/PickModal'
 import SchedulePanel from '../components/SchedulePanel'
 import ShareModal from '../components/ShareModal'
 import WebhookPanel from '../components/WebhookPanel'
@@ -54,6 +56,7 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
   const [toast, setToast] = useState<string | null>(null)
   const [picked, setPicked] = useState<string | null>(null)
   const [sharing, setSharing] = useState(false)
+  const [deleting, setDeleting] = useState(false)
   const { requireName } = useIdentity()
   const canEdit = state.can_edit
 
@@ -108,6 +111,8 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
           }
         />
       )}
+      {deleting && canEdit && <DeleteModal token={token} name={state.name} onClose={() => setDeleting(false)} />}
+      {picked && <PickModal member={picked} onClose={() => setPicked(null)} />}
       {toast && (
         <div className="toast" role="status">
           {toast}
@@ -140,6 +145,7 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
         canEdit={canEdit}
         onRename={(n) => act((w) => api.rename(token, n, w))}
         onShare={() => setSharing(true)}
+        onDelete={() => setDeleting(true)}
       />
 
       <section className="board">
@@ -185,22 +191,6 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
             </button>
           </div>
         )}
-        {picked && (
-          <p className="picked">
-            <span>
-              Random pick: <strong>{picked}</strong>
-              <span className="muted small">
-                {' '}
-                {remainingInRound(state) === 0
-                  ? 'Everyone has had a turn; the next pick starts a new round.'
-                  : `${remainingInRound(state)} left before anyone repeats.`}
-              </span>
-            </span>
-            <button type="button" className="btn btn-ghost small" onClick={() => setPicked(null)}>
-              Dismiss
-            </button>
-          </p>
-        )}
       </section>
 
       <section className="settings">
@@ -224,14 +214,8 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
 
       <AuditLog token={token} version={state.version} />
 
-      {canEdit && <DangerZone token={token} name={state.name} />}
     </main>
   )
-}
-
-function remainingInRound(state: RotationState): number {
-  const picked = new Set(state.random_picked.map((p) => p.toLowerCase()))
-  return state.members.filter((m) => !picked.has(m.toLowerCase())).length
 }
 
 function Header({
@@ -239,11 +223,13 @@ function Header({
   canEdit,
   onRename,
   onShare,
+  onDelete,
 }: {
   state: RotationState
   canEdit: boolean
   onRename: (name: string) => Promise<boolean>
   onShare: () => void
+  onDelete: () => void
 }) {
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(state.name)
@@ -285,57 +271,16 @@ function Header({
         )}
         {!canEdit && <div className="muted small">View only</div>}
       </div>
-      <button type="button" className="icon-btn share" onClick={onShare} aria-label="Share">
-        <ShareIcon />
-      </button>
-    </header>
-  )
-}
-
-function DangerZone({ token, name }: { token: string; name: string }) {
-  const [open, setOpen] = useState(false)
-  const [confirm, setConfirm] = useState('')
-  const [error, setError] = useState<string | null>(null)
-
-  async function del(e: FormEvent) {
-    e.preventDefault()
-    try {
-      await api.delete(token, confirm)
-      forgetRotation(token)
-      window.location.assign('/')
-    } catch (err) {
-      setError(err instanceof ApiError ? err.message : 'Could not reach the server.')
-    }
-  }
-
-  return (
-    <section className="danger-zone">
-      {!open ? (
-        <button type="button" className="link-action danger-text" onClick={() => setOpen(true)}>
-          Delete this rotation
+      <div className="head-actions">
+        <button type="button" className="icon-btn share" onClick={onShare} aria-label="Share" title="Share">
+          <ShareIcon />
         </button>
-      ) : (
-        <form className="setting-form" onSubmit={del}>
-          <p className="muted small">
-            This removes the rotation and its history for everyone, immediately, with no undo. Type{' '}
-            <strong>{name}</strong> to confirm.
-          </p>
-          <input className="input" value={confirm} onChange={(e) => setConfirm(e.target.value)} placeholder={name} autoFocus />
-          {error && <p className="error">{error}</p>}
-          <div className="row end">
-            <button type="button" className="btn btn-ghost small" onClick={() => setOpen(false)}>
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="btn btn-danger small"
-              disabled={confirm.trim().toLowerCase() !== name.toLowerCase()}
-            >
-              Delete forever
-            </button>
-          </div>
-        </form>
-      )}
-    </section>
+        {canEdit && (
+          <button type="button" className="icon-btn share trash" onClick={onDelete} aria-label="Delete rotation" title="Delete rotation">
+            <TrashIcon />
+          </button>
+        )}
+      </div>
+    </header>
   )
 }
