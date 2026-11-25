@@ -39,7 +39,7 @@ export default function Landing() {
           Create a rotation. Share it. The link is the password. Round robin or select randomly. Advance
           manually or on a schedule. Webhook support for notifications.
         </p>
-        <p>
+        <p className="muted">
           See an <Link to="/demo">example</Link>.
         </p>
       </section>
