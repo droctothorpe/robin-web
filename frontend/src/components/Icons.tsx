@@ -88,3 +88,4 @@ export function TrashIcon({ size = 18, className }: P) {
     </svg>
   )
 }
+

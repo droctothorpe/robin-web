@@ -34,7 +34,7 @@ export default function WebhookPanel({ url, hasWebhook, canEdit, onSave, onClear
           <div className="setting-actions">
             <button
               type="button"
-              className="btn btn-ghost small"
+              className="btn small"
               onClick={() => {
                 setDraft(url ?? '')
                 setEditing(true)

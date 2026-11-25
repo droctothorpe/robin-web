@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, type AuditEntry } from '../api'
 import { describeAudit, formatDateTime, relativeTime } from '../lib/format'
-import { ChevronIcon } from './Icons'
+import Disclosure from './Disclosure'
 
 export default function AuditLog({ token, version }: { token: string; version: number }) {
   const [open, setOpen] = useState(false)
@@ -39,13 +39,9 @@ export default function AuditLog({ token, version }: { token: string; version: n
   }
 
   return (
-    <section className={`history${open ? ' open' : ''}`}>
-      <button type="button" className="history-toggle" onClick={() => setOpen((o) => !o)} aria-expanded={open}>
-        <ChevronIcon className="chev" />
-        History
-      </button>
+    <Disclosure title="History" onOpenChange={setOpen}>
       {open && (
-        <div className="history-body">
+        <div>
           {entries.length === 0 && <p className="muted small">Nothing yet.</p>}
           <ul className="audit">
             {entries.map((e) => (
@@ -66,6 +62,6 @@ export default function AuditLog({ token, version }: { token: string; version: n
           )}
         </div>
       )}
-    </section>
+    </Disclosure>
   )
 }

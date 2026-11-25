@@ -4,6 +4,7 @@ import { api, ApiError, type RotationState, type Schedule } from '../api'
 import AuditLog from '../components/AuditLog'
 import CopyButton from '../components/CopyButton'
 import DeleteModal from '../components/DeleteModal'
+import Disclosure from '../components/Disclosure'
 import { ShareIcon, TrashIcon } from '../components/Icons'
 import MemberList from '../components/MemberList'
 import PickModal from '../components/PickModal'
@@ -149,13 +150,6 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
       />
 
       <section className="board">
-        <MemberList
-          members={state.members}
-          canEdit={canEdit}
-          onReorder={(m) => void act((w) => api.reorder(token, m, w))}
-          onRemove={(n) => void act((w) => api.removeMember(token, n, w))}
-          onAdd={(n) => act((w) => api.addMember(token, n, w))}
-        />
         {canEdit && (
           <div className="actions">
             <button
@@ -164,36 +158,46 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
               disabled={state.members.length < 2}
               onClick={() => act((w) => api.advance(token, w))}
             >
-              Next
+              Advance
             </button>
-            <button
-              type="button"
-              className="btn"
-              disabled={state.members.length < 2}
-              title="Skip whoever is up now; they go next instead"
-              onClick={() => act((w) => api.bump(token, w))}
-            >
-              Skip
-            </button>
-            <button
-              type="button"
-              className="btn"
-              disabled={state.members.length === 0}
-              onClick={() =>
-                act(async (w) => {
-                  const r = await api.random(token, w)
-                  setPicked(r.member)
-                  return r
-                })
-              }
-            >
-              Random
-            </button>
+            <div className="actions-side">
+              <button
+                type="button"
+                className="btn"
+                disabled={state.members.length < 2}
+                title="Skip whoever is up now; they go next instead"
+                onClick={() => act((w) => api.bump(token, w))}
+              >
+                Skip
+              </button>
+              <button
+                type="button"
+                className="btn"
+                disabled={state.members.length === 0}
+                onClick={() =>
+                  act(async (w) => {
+                    const r = await api.random(token, w)
+                    setPicked(r.member)
+                    return r
+                  })
+                }
+              >
+                Random
+              </button>
+            </div>
           </div>
         )}
+        <MemberList
+          members={state.members}
+          canEdit={canEdit}
+          onReorder={(m) => void act((w) => api.reorder(token, m, w))}
+          onRemove={(n) => void act((w) => api.removeMember(token, n, w))}
+          onAdd={(n) => act((w) => api.addMember(token, n, w))}
+        />
       </section>
 
-      <section className="settings">
+      <Disclosure title="Advanced">
+        <div className="settings">
         <SchedulePanel
           schedule={state.schedule}
           paused={state.schedule_paused}
@@ -210,7 +214,8 @@ function Rotation({ token, state, apply }: { token: string; state: RotationState
           onSave={(u) => act((w) => api.setWebhook(token, u, w))}
           onClear={() => void act((w) => api.clearWebhook(token, w))}
         />
-      </section>
+        </div>
+      </Disclosure>
 
       <AuditLog token={token} version={state.version} />
 

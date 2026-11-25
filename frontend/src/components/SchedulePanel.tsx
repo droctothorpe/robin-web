@@ -44,11 +44,11 @@ export default function SchedulePanel({ schedule, paused, nextFireAt, canEdit, o
         {canEdit && !editing && (
           <div className="setting-actions">
             {schedule && (
-              <button type="button" className="btn btn-ghost small" onClick={() => onPause(!paused)}>
+              <button type="button" className="btn small" onClick={() => onPause(!paused)}>
                 {paused ? 'Resume' : 'Pause'}
               </button>
             )}
-            <button type="button" className="btn btn-ghost small" onClick={() => setEditing(true)}>
+            <button type="button" className="btn small" onClick={() => setEditing(true)}>
               {schedule ? 'Change' : 'Set up'}
             </button>
           </div>
