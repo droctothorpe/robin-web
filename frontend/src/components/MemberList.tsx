@@ -57,11 +57,14 @@ export default function MemberList({ members, canEdit, onReorder, onRemove, onAd
       {members.length === 0 && <p className="muted center">No one on this rotation yet.</p>}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={members} strategy={verticalListSortingStrategy}>
-          <ol className="member-list" ref={listRef}>
-            {members.map((m, i) => (
-              <MemberRow key={m} name={m} index={i} canEdit={canEdit} onRemove={() => onRemove(m)} />
-            ))}
-          </ol>
+          <div className="member-list-wrap">
+            <div className="turn-band" aria-hidden="true" />
+            <ol className="member-list" ref={listRef}>
+              {members.map((m, i) => (
+                <MemberRow key={m} name={m} index={i} canEdit={canEdit} onRemove={() => onRemove(m)} />
+              ))}
+            </ol>
+          </div>
         </SortableContext>
       </DndContext>
       {canEdit && (

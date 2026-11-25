@@ -414,6 +414,26 @@ h1.editable:hover {
 .members {
   padding: 8px;
 }
+/* During a turn change the highlight is played by .turn-band, not the rows. See useTurnAnimation. */
+.member-list-wrap {
+  position: relative;
+}
+.turn-band {
+  display: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+}
+.turning .turn-band {
+  display: block;
+}
+.turning .member,
+.turning .member.current,
+.turning .member:hover {
+  background: transparent;
+}
 .member-list {
   list-style: none;
   margin: 0;
@@ -429,8 +449,6 @@ h1.editable:hover {
   padding: 10px 10px 10px 4px;
   border-radius: var(--radius-sm);
   background: transparent;
-  /* Padding eases so the lead row grows and shrinks in step with the turn animation. */
-  transition: background 0.2s, padding 0.42s;
 }
 .member:hover {
   background: var(--surface-2);
@@ -488,13 +506,6 @@ h1.editable:hover {
   min-width: 0;
   font-weight: 500;
   overflow-wrap: anywhere;
-  transition: font-size 0.42s;
-}
-@media (prefers-reduced-motion: reduce) {
-  .member,
-  .member-name {
-    transition: none;
-  }
 }
 .member.current .member-name {
   font-size: 1.5rem;
