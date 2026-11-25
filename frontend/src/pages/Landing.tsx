@@ -35,23 +35,7 @@ export default function Landing() {
 
   return (
     <main className="stack landing">
-      <section className="hero">
-        <h1>Distribute work equitably and transparently.</h1>
-        <p className="muted">
-          Create a rotation. Share it. The link is the password. Round robin or select randomly. Advance
-          manually or on a schedule. Webhook support for notifications. See an example{' '}
-          <Link to="/demo">here</Link>.
-        </p>
-        {!creating && (
-          <div className="hero-cta">
-            <button type="button" className="btn btn-primary" onClick={() => navigate('/new')}>
-              Create a rotation
-            </button>
-          </div>
-        )}
-      </section>
-
-      {creating && (
+      {creating ? (
         <form className="card stack" onSubmit={submit}>
           <h2>New rotation</h2>
           <label>
@@ -88,6 +72,20 @@ export default function Landing() {
             </button>
           </div>
         </form>
+      ) : (
+        <section className="hero">
+          <h1>Distribute work equitably and transparently.</h1>
+          <p className="muted">
+            Create a rotation. Share it. The link is the password. Round robin or select randomly. Advance
+            manually or on a schedule. Webhook support for notifications. See an example{' '}
+            <Link to="/demo">here</Link>.
+          </p>
+          <div className="hero-cta">
+            <button type="button" className="btn btn-primary" onClick={() => navigate('/new')}>
+              Create a rotation
+            </button>
+          </div>
+        </section>
       )}
 
       {saved.length > 0 && (
