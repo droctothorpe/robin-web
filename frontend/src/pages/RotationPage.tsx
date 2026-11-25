@@ -272,14 +272,14 @@ function Header({
         {!canEdit && <div className="muted small">View only</div>}
       </div>
       <div className="head-actions">
-        <button type="button" className="icon-btn share" onClick={onShare} aria-label="Share" title="Share">
-          <ShareIcon />
-        </button>
         {canEdit && (
           <button type="button" className="icon-btn share trash" onClick={onDelete} aria-label="Delete rotation" title="Delete rotation">
             <TrashIcon />
           </button>
         )}
+        <button type="button" className="icon-btn share" onClick={onShare} aria-label="Share" title="Share">
+          <ShareIcon />
+        </button>
       </div>
     </header>
   )
