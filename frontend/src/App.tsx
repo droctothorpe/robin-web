@@ -5,6 +5,7 @@ import { IdentityProvider, useIdentity } from './identity'
 import Landing from './pages/Landing'
 import RotationPage from './pages/RotationPage'
 import { applyTheme, effectiveTheme, getTheme, setTheme } from './theme'
+import Logo from './components/Logo'
 
 export default function App() {
   return (
@@ -38,7 +39,7 @@ function TopBar() {
   return (
     <nav className="topbar">
       <Link to="/" className="brand">
-        <span className="brand-mark" aria-hidden="true" />
+        <Logo className="brand-mark" />
         Robin
       </Link>
       <div className="topbar-actions">

@@ -139,11 +139,9 @@ button {
   text-decoration: none;
 }
 .brand-mark {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: var(--accent);
-  display: inline-block;
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
 }
 .stack {
   display: flex;
