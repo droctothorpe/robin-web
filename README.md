@@ -21,20 +21,28 @@ Robin used to be a Slack slash command; that version is at
 
 ## Stack
 
-FastAPI, SQLAlchemy 2, Alembic, SQLite on a volume. React 19, TypeScript,
-Vite. One container, one Fly.io machine. See ADR 0002 for why.
+One Cloudflare Worker (TypeScript, Hono) serving the API and the built
+frontend. D1 holds the data. One Durable Object per rotation fans out live
+updates over WebSockets and owns the schedule alarm. A cron trigger handles
+expiry. React 19, TypeScript, Vite on the front. See ADR 0003 for why.
+
+```
+worker/     the Worker: API, Durable Object, D1 migrations, tests
+frontend/   the React app
+```
 
 ## Local development
 
-Requirements: Python 3.13 with [uv](https://docs.astral.sh/uv/), Node 24.
+Requirements: Node 24.
 
 ```bash
-cd backend && uv sync && cd ..
+cd worker && npm install && cd ..
 cd frontend && npm install && cd ..
-make dev          # backend on :8000, frontend on :5173 (proxies /api)
+make dev          # worker on :8787, frontend on :5173 (proxies /api)
 ```
 
-Open http://localhost:5173.
+Open http://localhost:5173. The first run applies the D1 migration to a
+local database under `worker/.wrangler/`.
 
 Run the tests:
 
@@ -42,60 +50,48 @@ Run the tests:
 make test
 ```
 
-The backend serves the built frontend when `frontend/dist` exists, which is
-how the container works. To try that locally:
+The Worker serves the built frontend when `frontend/dist` exists, which is
+how production works. To try that locally:
 
 ```bash
 make build
-cd backend && uv run alembic upgrade head && uv run uvicorn app.main:app --port 8000
-# open http://localhost:8000
+cd worker && npx wrangler dev
+# open http://localhost:8787
 ```
 
 ## Configuration
 
-Environment variables, all optional:
+Set in `worker/wrangler.jsonc` under `vars`:
 
 | Variable | Default | Meaning |
 | --- | --- | --- |
-| `DATABASE_URL` | `sqlite:///./robin.db` | SQLAlchemy URL |
-| `PUBLIC_BASE_URL` | `http://localhost:5173` | Base URL used in webhook messages |
-| `FRONTEND_DIST` | `../frontend/dist` | Built frontend to serve |
+| `PUBLIC_BASE_URL` | `http://localhost:8787` | Base URL used in webhook messages |
 | `ROTATION_TTL_DAYS` | `180` | Days without a visit before deletion |
 | `CREATE_LIMIT_PER_HOUR` | `20` | Rotations one IP may create per hour |
-| `SCHEDULER_INTERVAL_SECONDS` | `30` | How often due schedules are checked |
-| `RUN_BACKGROUND_TASKS` | `1` | Set `0` to disable the scheduler (tests) |
+| `WEBHOOK_TIMEOUT_SECONDS` | `5` | Webhook POST timeout |
 
-## Deploying to Fly.io
+After editing `wrangler.jsonc`, run `make types` to refresh the generated
+binding types.
+
+## Deploying to Cloudflare
 
 First time:
 
 ```bash
-fly launch --no-deploy --copy-config --name robin-web   # pick your own name
-fly volumes create robin_data --region ewr --size 1
-fly deploy
+cd worker
+npx wrangler login
+npx wrangler d1 create robin           # prints a database_id
 ```
 
-If you chose a different app name, update `app` and `PUBLIC_BASE_URL` in
-`fly.toml` first.
+Paste the `database_id` into `wrangler.jsonc`, set `PUBLIC_BASE_URL` to the
+URL the Worker will have (`https://robin.<your-subdomain>.workers.dev`, or
+your own domain), then from the repo root:
 
-Later deploys are just `fly deploy`. Migrations run on boot.
-
-### Prototype vs. always-on
-
-`fly.toml` ships in prototype mode: the machine stops when idle and costs
-cents. A stopped machine cannot fire the schedule; the next visit wakes it and
-overdue rotations advance once (ADR 0002). Webhook posts arrive late until
-then.
-
-When a team relies on the schedule, make the machine always-on:
-
-```toml
-[http_service]
-  auto_stop_machines = "off"
-  min_machines_running = 1
+```bash
+make deploy       # builds the frontend, applies migrations, deploys
 ```
 
-That is roughly $2 to $3 a month at current Fly prices.
+Later deploys are the same command. Everything here fits in the free plan.
 
 ## API
 
@@ -107,7 +103,7 @@ the `X-Display-Name` header.
 | POST | `/rotations` | anyone (rate limited) |
 | GET | `/r/{token}` | view or edit |
 | GET | `/r/{token}/audit?before=&limit=` | view or edit |
-| GET | `/r/{token}/events` | view or edit, server-sent events |
+| GET | `/r/{token}/ws` | view or edit, WebSocket for live updates |
 | POST | `/r/{token}/advance`, `/bump`, `/random` | edit |
 | POST / DELETE / PUT | `/r/{token}/members[/{name}]` | edit |
 | PATCH | `/r/{token}` | edit (rename) |
@@ -117,20 +113,23 @@ the `X-Display-Name` header.
 | POST | `/r/{token}/regenerate` | edit |
 | POST | `/r/{token}/delete` | edit |
 
+WebSocket frames are JSON: `{"type":"hello","version":N}` on connect, then
+`{"type":"change","version":N}` after each change and
+`{"type":"change","deleted":true}` when the rotation is deleted.
+
 Webhook payload:
 
 ```json
 {
-  "text": "*Standup lead*: it's Sam's turn (after Alex). <https://…/r/view-token|View rotation>",
-  "content": "Standup lead: it's Sam's turn. https://…/r/view-token",
+  "text": "*Standup lead*: it's Sam's turn (after Alex). <https://.../r/VIEW|View rotation>",
+  "content": "Standup lead: it's Sam's turn. https://.../r/VIEW",
   "rotation": "Standup lead",
   "current": "Sam",
   "previous": "Alex",
-  "trigger": "manual | schedule | bump",
-  "view_url": "https://…/r/view-token"
+  "trigger": "manual",
+  "view_url": "https://.../r/VIEW"
 }
 ```
 
-## License
-
-MIT. See [LICENSE](LICENSE).
+Slack reads `text`, Discord reads `content`, and anything else can use the
+structured fields. `trigger` is `manual`, `bump`, or `schedule`.

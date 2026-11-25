@@ -4,7 +4,7 @@ Date: 2026-11-24
 
 ## Status
 
-Accepted
+Superseded by [0003](0003-cloudflare-workers-d1-durable-objects.md)
 
 ## Context
 

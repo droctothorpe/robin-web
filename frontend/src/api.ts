@@ -109,6 +109,7 @@ export const api = {
     request<void>('POST', `/r/${t}/delete`, { confirm_name: confirmName }),
 }
 
-export function eventsUrl(token: string): string {
-  return `/api/r/${token}/events`
+export function socketUrl(token: string): string {
+  const proto = window.location.protocol === 'https:' ? 'wss' : 'ws'
+  return `${proto}://${window.location.host}/api/r/${token}/ws`
 }

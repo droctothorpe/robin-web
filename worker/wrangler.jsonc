@@ -1,0 +1,35 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "robin",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-08-22",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "directory": "../frontend/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*", "/health"]
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "robin",
+      // Replace with the id printed by `wrangler d1 create robin`.
+      "database_id": "00000000-0000-0000-0000-000000000000",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "durable_objects": {
+    "bindings": [{ "name": "ROTATION", "class_name": "RotationObject" }]
+  },
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["RotationObject"] }],
+  "triggers": { "crons": ["17 * * * *"] },
+  "vars": {
+    // Base URL used in webhook messages. Set to your deployed origin.
+    "PUBLIC_BASE_URL": "http://localhost:8787",
+    "ROTATION_TTL_DAYS": "180",
+    "CREATE_LIMIT_PER_HOUR": "20",
+    "WEBHOOK_TIMEOUT_SECONDS": "5"
+  },
+  "observability": { "enabled": true }
+}

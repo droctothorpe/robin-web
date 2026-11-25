@@ -1,16 +1,10 @@
-# Python
-__pycache__/
-*.pyc
-.venv/
-.pytest_cache/
-.ruff_cache/
-*.db
-*.db-shm
-*.db-wal
-*.sqlite
 # Node
 node_modules/
 frontend/dist/
+# Wrangler
+worker/.wrangler/
+worker/worker-configuration.d.ts
+worker/.dev.vars
 # Env
 .env
 .env.*
