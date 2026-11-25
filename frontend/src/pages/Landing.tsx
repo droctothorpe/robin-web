@@ -37,10 +37,7 @@ export default function Landing() {
         <h1>Distribute work equitably and transparently.</h1>
         <p className="muted">
           Create a rotation. Share it. The link is the password. Round robin or select randomly. Advance
-          manually or on a schedule. Webhook support for notifications.
-        </p>
-        <p className="muted">
-          See an <Link to="/demo">example</Link>.
+          manually or on a schedule. Webhook support for notifications. See an <Link to="/demo">example</Link>.
         </p>
       </section>
 
