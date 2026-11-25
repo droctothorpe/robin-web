@@ -15,7 +15,8 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { useState, type FormEvent } from 'react'
+import { useRef, useState, type FormEvent } from 'react'
+import { useTurnAnimation } from '../hooks/useTurnAnimation'
 import { CloseIcon, GripIcon } from './Icons'
 
 type Props = {
@@ -32,6 +33,8 @@ export default function MemberList({ members, canEdit, onReorder, onRemove, onAd
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
   const [draft, setDraft] = useState('')
+  const listRef = useRef<HTMLOListElement>(null)
+  useTurnAnimation(listRef, members)
 
   function onDragEnd(e: DragEndEvent) {
     const { active, over } = e
@@ -54,7 +57,7 @@ export default function MemberList({ members, canEdit, onReorder, onRemove, onAd
       {members.length === 0 && <p className="muted center">No one on this rotation yet.</p>}
       <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
         <SortableContext items={members} strategy={verticalListSortingStrategy}>
-          <ol className="member-list">
+          <ol className="member-list" ref={listRef}>
             {members.map((m, i) => (
               <MemberRow key={m} name={m} index={i} canEdit={canEdit} onRemove={() => onRemove(m)} />
             ))}
@@ -100,6 +103,7 @@ function MemberRow({
     <li
       ref={setNodeRef}
       style={style}
+      data-member={name}
       className={`member${isDragging ? ' dragging' : ''}${isCurrent ? ' current' : ''}`}
     >
       {canEdit ? (
