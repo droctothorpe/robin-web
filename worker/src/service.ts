@@ -80,9 +80,7 @@ function notification(env: Env, r: Rotation, previous: string | null, trigger: s
   const current = r.members[0] ?? null
   if (!r.webhookUrl || current === null) return null
   const viewUrl = `${publicBaseUrl(env)}/r/${r.viewToken}`
-  let text = `*${r.name}*: it's ${current}'s turn`
-  if (previous && previous !== current) text += ` (after ${previous})`
-  text += `. <${viewUrl}|View rotation>`
+  const text = `*${r.name}*: it's ${current}'s turn. <${viewUrl}|View rotation>`
   return {
     rotationId: r.id,
     url: r.webhookUrl,
