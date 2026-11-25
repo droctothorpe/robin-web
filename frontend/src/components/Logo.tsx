@@ -5,13 +5,11 @@ const BEAK = '#f2b335'
 const EYE = '#1d1f23'
 const CREAM = '#f3e7d3'
 
-const foot = (x: number, top: number) =>
-  `M${x} ${top}v5 M${x - 3.2} ${top + 7.5} L${x} ${top + 5} L${x + 3.2} ${top + 7.5} M${x} ${top + 5}v3`
 
 /** Robin: a fat round bird with an orange belly, facing you. */
 export default function Logo({ size = 22, className }: { size?: number; className?: string }) {
   return (
-    <svg className={className} width={size} height={size} viewBox="0 0 64 64" aria-hidden="true">
+    <svg className={className} width={size} height={size} viewBox="4 8 56 52" aria-hidden="true">
       <defs>
         <clipPath id="robin-body">
           <circle cx="32" cy="34" r="23" />
@@ -26,14 +24,6 @@ export default function Logo({ size = 22, className }: { size?: number; classNam
       <circle cx="22" cy="26" r="2.6" fill={EYE} />
       <circle cx="42" cy="26" r="2.6" fill={EYE} />
       <polygon points="32,29 36,32 32,37 28,32" fill={BEAK} />
-      <path
-        d={`${foot(26, 55)} ${foot(38, 55)}`}
-        fill="none"
-        stroke={BEAK}
-        strokeWidth="2.2"
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
     </svg>
   )
 }
