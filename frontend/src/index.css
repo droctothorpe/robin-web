@@ -223,6 +223,10 @@ a.btn {
   padding: 6px 11px;
   font-size: 0.85rem;
 }
+.btn.reroll {
+  padding-left: 9px;
+  padding-right: 9px;
+}
 .btn-primary {
   font-weight: 600;
 }
@@ -275,6 +279,12 @@ a.btn {
   gap: 8px;
   flex-shrink: 0;
 }
+@keyframes pick-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+}
 .pick-result {
   font-size: 2rem;
   font-weight: 700;
@@ -282,6 +292,7 @@ a.btn {
   padding: 18px 12px;
   border-radius: var(--radius-sm);
   background: var(--accent-soft);
+  animation: pick-in 0.18s ease-out;
   overflow-wrap: anywhere;
 }
 .link-action {

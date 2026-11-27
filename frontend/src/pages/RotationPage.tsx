@@ -101,6 +101,14 @@ export function Rotation({
     [requireName, apply, demo, who],
   )
 
+  /** Random pick; also used by the dice in the result modal to roll again. */
+  const pickRandom = () =>
+    act(async (w) => {
+      const r = await api.random(token, w)
+      setPicked(r.member)
+      return r
+    })
+
   const days = daysUntil(state.expires_at)
   const editUrl = state.edit_token ? `${window.location.origin}/r/${state.edit_token}` : null
 
@@ -126,7 +134,7 @@ export function Rotation({
         />
       )}
       {deleting && canEdit && <DeleteModal token={token} name={state.name} onClose={() => setDeleting(false)} />}
-      {picked && <PickModal member={picked} onClose={() => setPicked(null)} />}
+      {picked && <PickModal member={picked} onReroll={pickRandom} onClose={() => setPicked(null)} />}
       {toast && (
         <div className="toast" role="status">
           {toast}
@@ -207,13 +215,7 @@ export function Rotation({
                 type="button"
                 className="btn"
                 disabled={state.members.length === 0}
-                onClick={() =>
-                  act(async (w) => {
-                    const r = await api.random(token, w)
-                    setPicked(r.member)
-                    return r
-                  })
-                }
+                onClick={pickRandom}
               >
                 Random
               </button>

@@ -89,3 +89,13 @@ export function TrashIcon({ size = 18, className }: P) {
   )
 }
 
+
+/** A die showing five, for "pick again". */
+export function DiceIcon({ size = 18, className }: P) {
+  return (
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" {...base}>
+      <rect x="3.5" y="3.5" width="17" height="17" rx="3.5" />
+      <path fill="currentColor" stroke="none" d="M8 6.8a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Zm8 0a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Zm-4 4a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Zm-4 4a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Zm8 0a1.2 1.2 0 1 1 0 2.4 1.2 1.2 0 0 1 0-2.4Z" />
+    </svg>
+  )
+}
